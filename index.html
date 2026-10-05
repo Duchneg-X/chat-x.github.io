@@ -265,10 +265,10 @@
      * You can optionally paste your API key here directly, OR enter
      * it through the UI settings modal inside the browser.
      */
-    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+    const GEMINI_API_KEY = "AQ.Ab8RN6LcEUoAtBlBl6-K_yH5DOKjPnmXA0JF1LW1y8bgEt1rlQ";
 
     // Application State Variables
-    let apiKey = localStorage.getItem('gemini_api_key') || (GEMINI_API_KEY !== "YOUR_GEMINI_API_KEY_HERE" ? GEMINI_API_KEY : "");
+    let apiKey = localStorage.getItem('gemini_api_key') || (GEMINI_API_KEY !== "AQ.Ab8RN6LcEUoAtBlBl6-K_yH5DOKjPnmXA0JF1LW1y8bgEt1rlQ" ? GEMINI_API_KEY : "");
     let chats = JSON.parse(localStorage.getItem('gemini_chats') || '[]');
     let currentChatId = null;
     let isGenerating = false;
