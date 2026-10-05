@@ -1,259 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Chat-X | Simple Chatbot To Help You.</title>
-
-    <link rel="stylesheet" href="Css/Main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chatbot Hub</title>
+  <link rel="stylesheet" href="Css/Main.css" />
 </head>
-
 <body>
 
-    <!-- ============================= -->
-    <!-- APPLICATION -->
-    <!-- ============================= -->
-
-    <div class="app">
-
-        <!-- ============================= -->
-        <!-- SIDEBAR -->
-        <!-- ============================= -->
-
-        <aside class="sidebar" id="sidebar">
-
-            <div class="sidebar-header">
-
-                <div class="logo">
-                    🤖
-                    <span>My AI</span>
-                </div>
-
-                <button
-                    class="close-sidebar"
-                    id="closeSidebar"
-                    aria-label="Close sidebar">
-                    ×
-                </button>
-
-            </div>
-
-
-            <!-- NEW CHAT -->
-
-            <button class="new-chat-btn" id="newChatBtn">
-                <span>＋</span>
-                <span>New Chat</span>
-            </button>
-
-
-            <!-- CHAT HISTORY -->
-
-            <div class="history">
-
-                <h3>Chat History</h3>
-
-                <div class="history-group">
-
-                    <p class="history-date">Today</p>
-
-                    <button class="chat-history-item">
-                        <span>💬</span>
-                        <span>Welcome chat</span>
-                    </button>
-
-                    <button class="chat-history-item">
-                        <span>💬</span>
-                        <span>Learning HTML</span>
-                    </button>
-
-                </div>
-
-
-                <div class="history-group">
-
-                    <p class="history-date">Yesterday</p>
-
-                    <button class="chat-history-item">
-                        <span>💬</span>
-                        <span>JavaScript basics</span>
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- SIDEBAR BOTTOM -->
-
-            <div class="sidebar-bottom">
-
-                <button class="sidebar-btn">
-                    ⚙️
-                    <span>Settings</span>
-                </button>
-
-                <button class="sidebar-btn">
-                    ❓
-                    <span>Help</span>
-                </button>
-
-            </div>
-
-        </aside>
-
-
-        <!-- ============================= -->
-        <!-- MAIN CONTENT -->
-        <!-- ============================= -->
-
-        <main class="main">
-
-
-            <!-- TOP BAR -->
-
-            <header class="topbar">
-
-                <button
-                    class="menu-btn"
-                    id="openSidebar"
-                    aria-label="Open sidebar">
-                    ☰
-                </button>
-
-
-                <div class="topbar-title">
-
-                    <div class="mini-logo">
-                        🤖
-                    </div>
-
-                    <div>
-                        <h1>My AI</h1>
-                        <span>Simple AI Assistant</span>
-                    </div>
-
-                </div>
-
-
-                <!-- AUTH BUTTONS -->
-
-                <div class="auth-buttons">
-
-                    <button
-                        class="signin-btn"
-                        id="signinBtn">
-                        Sign In
-                    </button>
-
-                    <button
-                        class="signup-btn"
-                        id="signupBtn">
-                        Sign Up
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <!-- ============================= -->
-            <!-- CHAT AREA -->
-            <!-- ============================= -->
-
-            <section class="chat-area" id="chatArea">
-
-
-                <!-- WELCOME SCREEN -->
-
-                <div class="welcome-screen" id="welcomeScreen">
-
-                    <div class="welcome-icon">
-                        🤖
-                    </div>
-
-                    <h2>How can I help you?</h2>
-
-                    <p>
-                        Ask me anything and let's start a conversation.
-                    </p>
-
-
-                    <!-- SUGGESTIONS -->
-
-                    <div class="suggestions">
-
-                        <button class="suggestion">
-                            💡 Explain something
-                        </button>
-
-                        <button class="suggestion">
-                            💻 Help me with coding
-                        </button>
-
-                        <button class="suggestion">
-                            📚 Help me learn
-                        </button>
-
-                        <button class="suggestion">
-                            ✍️ Help me write
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <!-- MESSAGES WILL APPEAR HERE -->
-
-                <div
-                    class="messages"
-                    id="messages">
-                </div>
-
-            </section>
-
-
-            <!-- ============================= -->
-            <!-- MESSAGE INPUT -->
-            <!-- ============================= -->
-
-            <div class="input-area">
-
-                <div class="input-container">
-
-                    <textarea
-                        id="messageInput"
-                        placeholder="Message My AI..."
-                        rows="1">
-                    </textarea>
-
-                    <button
-                        class="send-btn"
-                        id="sendBtn"
-                        aria-label="Send message">
-                        ➤
-                    </button>
-
-                </div>
-
-                <p class="input-note">
-                    My AI can make mistakes. Check important information.
-                </p>
-
-            </div>
-
-        </main>
-
+  <!-- AUTHENTICATION OVERLAY -->
+  <div id="authModal" class="modal-overlay">
+    <div class="modal-card">
+      <h2 id="authTitle">Sign In</h2>
+      <form id="authForm">
+        <div class="form-group" id="usernameGroup" style="display: none;">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter username" />
+        </div>
+        <div class="form-group">
+          <label for="email">Gmail / Email</label>
+          <input type="email" id="email" required placeholder="name@gmail.com" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" />
+        </div>
+        <button type="submit" id="authSubmitBtn" class="primary-btn">Sign In</button>
+      </form>
+      <p class="toggle-text">
+        <span id="authToggleMsg">Don't have an account?</span>
+        <a href="#" id="authToggleLink">Sign Up</a>
+      </p>
     </div>
+  </div>
 
+  <!-- MAIN APP INTERFACE -->
+  <div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>Chats</h3>
+        <button id="newChatBtn" class="icon-btn" title="New Chat">+</button>
+      </div>
+      <div class="user-badge" id="userBadge">
+        <span class="user-id" id="displayUserId">ID: Loading...</span>
+        <span class="user-name" id="displayUsername">Guest</span>
+      </div>
+      <ul class="chat-list" id="chatList"></ul>
+      <button id="logoutBtn" class="logout-btn">Sign Out</button>
+    </aside>
 
-    <!-- ============================= -->
-    <!-- JAVASCRIPT -->
-    <!-- ============================= -->
+    <!-- CHAT WORKSPACE -->
+    <main class="chat-workspace">
+      <header class="chat-header">
+        <button id="toggleSidebar" class="icon-btn">☰</button>
+        <h2>Assistant Bot</h2>
+      </header>
 
-    <script src="js/main.js"></script>
+      <div class="message-container" id="messageContainer">
+        <div class="message bot-message">
+          Hello! How can I assist you today?
+        </div>
+      </div>
 
+      <div class="input-area">
+        <input 
+          type="text" 
+          id="userInput" 
+          placeholder="Type your message here..." 
+          autocomplete="off" 
+        />
+        <button id="sendBtn" class="send-btn">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="Js/Main.js"></script>
 </body>
 </html>
