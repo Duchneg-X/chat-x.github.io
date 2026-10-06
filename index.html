@@ -80,7 +80,7 @@ input{width:100%;background:#080d14;border:1px solid #2a3546;color:white;border-
 <section id="game" class="screen">
  <canvas id="c" class="gamecanvas"></canvas>
  <div class="hud top-hud"><div class="scorebar"><div class="score blue"><span id="pname">YOU</span> <span id="pscore">0</span></div><div class="round"><b id="roundtxt">ROUND 1</b><span id="timer">90</span>s</div><div class="score red"><span id="escore">0</span> <span id="ename">ENEMY</span></div></div></div>
- <div class="hud health"><div style="display:flex;justify-content:space-between;font-size:12px"><b>HP</b><span id="hptext">100 / 100</span></div><div class="bar"><i id="hpbar"></i></div><div class="ammo"><span>PISTOL</span><b><span id="ammo">12</span> / ∞</b></div></div>
+ <div class="hud health"><div style="display:flex;justify-content:space-between;font-size:12px"><b>HP</b><span id="hptext">200 / 200</span></div><div class="bar"><i id="hpbar"></i></div><div class="ammo"><span>PISTOL · 50 DMG · UNLIMITED</span><b><span id="ammo">∞</span></b></div></div>
  <div class="hud controls"><div class="key mobile" data-k="left"><strong>◀</strong>MOVE</div><div class="key mobile" data-k="right"><strong>▶</strong>MOVE</div><div class="key mobile" data-k="jump"><strong>▲</strong>JUMP</div><div class="key gloo" data-k="gloo"><strong>🧱</strong>GLOO</div><div class="key fire" data-k="fire"><strong>●</strong>FIRE</div></div>
 </section>
 
@@ -107,7 +107,7 @@ $('nick').addEventListener('input',()=>{$('nickerr').textContent=''});
 $('copyid').onclick=()=>navigator.clipboard?.writeText(profile.id);
 $('reset').onclick=()=>{if(confirm('Delete this local fighter profile?')){localStorage.removeItem(KEY);location.reload()}};
 
-let peer=null,conn=null,hostCode='',isHost=false,online=false;
+let peer=null,conn=null,hostCode='',isHost=false,online=false,matchStarted=false;
 function initPeer(){
   if(peer)return;
   try{
@@ -126,7 +126,7 @@ function wireConn(){
 $('host').onclick=()=>{initPeer();if(peer&&!peer.destroyed){try{peer.destroy();}catch{}peer=null;setTimeout(initPeer,100)}};
 $('copyroom').onclick=()=>navigator.clipboard?.writeText($('roomcode').value);
 $('join').onclick=()=>{let code=$('joincode').value.trim().toUpperCase();if(!peer||peer.destroyed){initPeer();setTimeout(()=>joinRoom(code),700)}else joinRoom(code)};
-function joinRoom(code){if(!code)return;try{conn=peer.connect(code);isHost=false;wireConn();$('netstatus').textContent='Connecting to '+code+'…';conn.on('open',()=>{online=true;conn.send({t:'HELLO',nick:profile.nick,id:profile.id});startMatch(conn.peer?'online':'bot')})}catch{startMatch('bot')}}
+function joinRoom(code){if(!code)return;try{conn=peer.connect(code);isHost=false;wireConn();$('netstatus').textContent='Connecting to '+code+'…';conn.on('open',()=>{online=true;conn.send({t:'HELLO',nick:profile.nick,id:profile.id})})}catch{startMatch('bot')}}
 function network(d){
  if(d.t==='HELLO'){
    $('vsenemy').textContent=d.nick||'Friend';
@@ -134,22 +134,32 @@ function network(d){
    startMatch('online',d.nick||'Friend');
  }
  if(d.t==='HELLO_ACK'){startMatch('online',d.nick||'Friend')}
- if(d.t==='STATE'&&game.running&&!isHost){game.enemy.x=d.x;game.enemy.y=d.y;game.enemy.hp=d.hp;game.enemy.vx=d.vx;game.enemy.vy=d.vy;game.enemy.aim=d.aim}
- if(d.t==='SHOT'&&game.running&&!isHost)remoteShot(d);
- if(d.t==='GLOO'&&game.running&&!isHost)addGloo(d.x,d.y,d.owner);
- if(d.t==='HIT'&&game.running&&!isHost){game.enemy.hp=Math.max(0,game.enemy.hp-d.dmg)}
+ if(d.t==='PLAYER'&&game.running){
+   game.enemy.x=d.x;game.enemy.y=d.y;game.enemy.hp=d.hp;
+   game.enemy.vx=d.vx;game.enemy.vy=d.vy;game.enemy.aim=d.aim;
+ }
+ if(d.t==='SHOT'&&game.running)remoteShot(d);
+ if(d.t==='GLOO'&&game.running)addGloo(d.x,d.y,d.owner);
+ if(d.t==='HIT'&&game.running){
+   game.player.hp=Math.max(0,game.player.hp-d.dmg);
+ }
+ if(d.t==='ROUND_END'&&game.running&&!isHost&&!roundEnded){
+   roundEnded=true;endRound(d.winner);
+ }
 }
 function send(d){if(conn&&conn.open)try{conn.send(d)}catch{}}
 
-let matchMode='bot',enemyName='Bean Hunter',qTimer=null;
+let matchMode='bot',enemyName='Bean Hunter',qTimer=null,roundEnded=false;
 function startMatch(mode='bot',name='Bean Hunter'){
+ if(matchStarted && matchMode===mode && game.running)return;
+ matchStarted=true;
  matchMode=mode;enemyName=name||'Bean Hunter';$('vsenemy').textContent=enemyName;show('matchfound');
  let n=3;$('count').textContent=n;clearInterval(qTimer);qTimer=setInterval(()=>{n--;$('count').textContent=n;if(n<=0){clearInterval(qTimer);startGame()}},800)
 }
 $('quick').onclick=()=>{show('queue');$('qtitle').textContent='SEARCHING FOR OPPONENT';$('qtext').textContent='Looking for a nearby skill-matched fighter…';setTimeout(()=>startMatch('bot','Bean Hunter'),1300)};
 $('cancelq').onclick=()=>show('lobby');
-$('again').onclick=()=>startMatch('bot','Bean Hunter');
-$('back').onclick=()=>{game.running=false;show('lobby')};
+$('again').onclick=()=>{matchStarted=false;startMatch('bot','Bean Hunter')};
+$('back').onclick=()=>{game.running=false;matchStarted=false;show('lobby')};
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&game.running){game.running=false;show('lobby')}});
 
 const canvas=$('c'),ctx=canvas.getContext('2d');
@@ -168,27 +178,28 @@ document.querySelectorAll('.key').forEach(b=>{
 function resize(){canvas.width=innerWidth;canvas.height=innerHeight}addEventListener('resize',resize);resize();
 
 const game={running:false,round:1,pscore:0,escore:0,time:90,bullets:[],gloos:[],particles:[],kills:0,last:0,tick:0,enemy:null,player:null};
-function fighter(x,enemy=false){return{x,y:0,w:38,h:58,vx:0,vy:0,hp:100,max:100,onGround:false,jumps:0,aim:0,cool:0,ammo:12,enemy}}
+function fighter(x,enemy=false){return{x,y:0,w:38,h:58,vx:0,vy:0,hp:200,max:200,onGround:false,jumps:0,aim:0,cool:0,ammo:Infinity,enemy}}
 function startGame(){
  show('game');resize();game.running=true;game.round=1;game.pscore=0;game.escore=0;game.time=90;game.kills=0;newRound();game.last=performance.now();requestAnimationFrame(loop)
 }
 function newRound(){
- game.time=90;game.bullets=[];game.gloos=[];game.particles=[];game.player=fighter(100);game.enemy=fighter(canvas.width-145,true);
+ roundEnded=false;game.time=90;game.bullets=[];game.gloos=[];game.particles=[];game.player=fighter(100);game.enemy=fighter(canvas.width-145,true);
  game.player.y=canvas.height-150;game.enemy.y=canvas.height-150;game.player.aim=0;game.enemy.aim=Math.PI;
  updateHUD()
 }
 function jump(){let p=game.player;if(!p||!game.running)return;if(p.onGround||p.jumps<2){p.vy=-12;p.jumps++}}
 function shoot(){
- let p=game.player;if(!p||!game.running||p.cool>0||p.ammo<=0)return;
- p.cool=220;p.ammo--;let cx=p.x+p.w/2,cy=p.y+p.h/2,ang=Math.atan2(mouse.y-cy,mouse.x-cx);if(!mouse.x&&!mouse.y)ang=p.aim;
- p.aim=ang;let b={x:cx,y:cy,vx:Math.cos(ang)*16,vy:Math.sin(ang)*16,dmg:25,owner:'p',life:90};game.bullets.push(b);send({t:'SHOT',x:cx,y:cy,vx:b.vx,vy:b.vy,dmg:b.dmg});burst(cx,cy,2)
+ let p=game.player;if(!p||!game.running||p.cool>0)return;
+ p.cool=220;let cx=p.x+p.w/2,cy=p.y+p.h/2,ang=Math.atan2(mouse.y-cy,mouse.x-cx);if(!mouse.x&&!mouse.y)ang=p.aim;
+ p.aim=ang;let b={x:cx,y:cy,vx:Math.cos(ang)*16,vy:Math.sin(ang)*16,dmg:50,owner:'p',life:90};
+ game.bullets.push(b);send({t:'SHOT',x:cx,y:cy,vx:b.vx,vy:b.vy,dmg:50});burst(cx,cy,2)
 }
-function remoteShot(d){game.bullets.push({x:d.x,y:d.y,vx:d.vx,vy:d.vy,dmg:d.dmg,owner:'e',life:90})}
-function reload(){if(game.player)game.player.ammo=12}
+function remoteShot(d){game.bullets.push({x:d.x,y:d.y,vx:d.vx,vy:d.vy,dmg:50,owner:'e',life:90})}
+function reload(){}
 function gloo(){
  let p=game.player;if(!p||!game.running)return;
  let dir=(Math.cos(p.aim)>=0?1:-1),x=p.x+dir*48;if(game.gloos.some(g=>Math.abs(g.x-x)<55))return;
- addGloo(x,canvas.height-140,'p');send({t:'GLOO',x,y:canvas.height-140,owner:'p'})
+ addGloo(x,canvas.height-140,'p');send({t:'GLOO',x:x,y:canvas.height-140,owner:'p'})
 }
 function addGloo(x,y,owner){game.gloos.push({x:x-10,y:y,w:20,h:95,owner,life:1200});}
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
@@ -208,25 +219,35 @@ function botAI(){
  let e=game.enemy,p=game.player,dx=p.x-e.x; e.aim=Math.atan2((p.y+20)-(e.y+20),dx);
  if(Math.abs(dx)>230)e.vx=Math.sign(dx)*3.2;else if(Math.abs(dx)<120)e.vx=-Math.sign(dx)*2.1;else e.vx*=.8;
  if(Math.random()<.012&&e.onGround)e.vy=-11;
- if(e.cool<=0&&Math.abs(dx)<600){e.cool=480;e.ammo=e.ammo<=0?12:e.ammo;e.ammo--;game.bullets.push({x:e.x+e.w/2,y:e.y+28,vx:Math.cos(e.aim)*12,vy:Math.sin(e.aim)*12,dmg:18,owner:'e',life:90})}
+ if(e.cool<=0&&Math.abs(dx)<600){e.cool=480;game.bullets.push({x:e.x+e.w/2,y:e.y+28,vx:Math.cos(e.aim)*12,vy:Math.sin(e.aim)*12,dmg:50,owner:'e',life:90})}
  if(Math.random()<.002)addGloo(e.x+Math.sign(dx)*45,canvas.height-140,'e')
 }
 function updateBullets(){
- for(let i=game.bullets.length-1;i>=0;i--){let b=game.bullets[i];b.x+=b.vx;b.y+=b.vy;b.life--;
-  let target=b.owner==='p'?game.enemy:game.player;
-  if(hit({x:b.x-3,y:b.y-3,w:6,h:6},target)){target.hp-=b.dmg;burst(b.x,b.y,7);if(b.owner==='p'&&target.hp<=0){game.kills++}game.bullets.splice(i,1);continue}
+ for(let i=game.bullets.length-1;i>=0;i--){
+  let b=game.bullets[i];b.x+=b.vx;b.y+=b.vy;b.life--;
+  // Only the local player's bullets perform hit detection in online mode.
+  // The remote player performs the same check on their own machine and sends HIT.
+  if(b.owner==='p'){
+   if(hit({x:b.x-3,y:b.y-3,w:6,h:6},game.enemy)){
+    if(matchMode==='bot') game.enemy.hp=Math.max(0,game.enemy.hp-b.dmg);
+    else send({t:'HIT',dmg:50});
+    burst(b.x,b.y,7);if(game.enemy.hp<=0)game.kills++;game.bullets.splice(i,1);continue
+   }
+  }
   if(game.gloos.some(g=>b.x>g.x&&b.x<g.x+g.w&&b.y>g.y)){game.bullets.splice(i,1);continue}
   if(b.life<=0||b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height)game.bullets.splice(i,1)
  }
 }
 function burst(x,y,n){for(let i=0;i<n;i++)game.particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:25})}
-function updateHUD(){$('pscore').textContent=game.pscore;$('escore').textContent=game.escore;$('roundtxt').textContent='ROUND '+game.round;$('timer').textContent=Math.ceil(game.time);$('hptext').textContent=Math.max(0,Math.ceil(game.player.hp))+' / 100';$('hpbar').style.width=Math.max(0,game.player.hp)+'%';$('ammo').textContent=game.player.ammo}
+function updateHUD(){$('pscore').textContent=game.pscore;$('escore').textContent=game.escore;$('roundtxt').textContent='ROUND '+game.round;$('timer').textContent=Math.ceil(game.time);$('hptext').textContent=Math.max(0,Math.ceil(game.player.hp))+' / 200';$('hpbar').style.width=Math.max(0,game.player.hp/2)+'%';$('ammo').textContent='∞'}
 function endRound(winner){
+ if(roundEnded)return;roundEnded=true;
+ if(matchMode==='online'&&isHost)send({t:'ROUND_END',winner});
  if(winner==='p')game.pscore++;else game.escore++;
  if(game.pscore>=2||game.escore>=2){finish(game.pscore>game.escore);return}
  game.round++;setTimeout(newRound,900)
 }
-function finish(win){game.running=false;if(win)profile.wins++;else profile.losses++;save();$('winner').textContent=win?'VICTORY':'DEFEAT';$('winner').style.color=win?'var(--gold2)':'var(--red)';$('result').textContent=win?'You won the Lone Wolf duel.':'The opponent took the duel.';$('endrounds').textContent=game.pscore+' - '+game.escore;$('endkills').textContent=game.kills;refreshLobby();show('end')}
+function finish(win){game.running=false;matchStarted=false;if(win)profile.wins++;else profile.losses++;save();$('winner').textContent=win?'VICTORY':'DEFEAT';$('winner').style.color=win?'var(--gold2)':'var(--red)';$('result').textContent=win?'You won the Lone Wolf duel.':'The opponent took the duel.';$('endrounds').textContent=game.pscore+' - '+game.escore;$('endkills').textContent=game.kills;refreshLobby();show('end')}
 function draw(){
  let w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
  let grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#07111e');grad.addColorStop(1,'#11100d');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
@@ -249,10 +270,26 @@ function drawF(p,color){
 }
 function loop(now){
  if(!game.running)return;let dt=Math.min(32,now-game.last);game.last=now;
- playerInput();if(matchMode==='bot')botAI();physics(game.player);physics(game.enemy);updateBullets();
- game.time-=dt/1000;if(game.player.hp<=0)endRound('e');else if(game.enemy.hp<=0)endRound('p');else if(game.time<=0)endRound(game.player.hp>=game.enemy.hp?'p':'e');
+ playerInput();
+ if(matchMode==='bot')botAI();
+ physics(game.player);
+ if(matchMode==='bot')physics(game.enemy);
+ updateBullets();
+ game.time-=dt/1000;
+ if(matchMode==='bot'){
+   if(game.player.hp<=0)endRound('e');
+   else if(game.enemy.hp<=0)endRound('p');
+   else if(game.time<=0)endRound(game.player.hp>=game.enemy.hp?'p':'e');
+ } else if(isHost&&!roundEnded){
+   if(game.player.hp<=0)endRound('e');
+   else if(game.enemy.hp<=0)endRound('p');
+   else if(game.time<=0)endRound(game.player.hp>=game.enemy.hp?'p':'e');
+ }
  for(const g of game.gloos)g.life--;game.gloos=game.gloos.filter(g=>g.life>0);
- if(++game.tick%3===0&&isHost)send({t:'STATE',x:game.enemy.x,y:game.enemy.y,vx:game.enemy.vx,vy:game.enemy.vy,hp:game.enemy.hp,aim:game.enemy.aim});
+ // In online mode every client broadcasts its own player state.
+ if(++game.tick%3===0&&matchMode==='online'){
+   send({t:'PLAYER',x:game.player.x,y:game.player.y,vx:game.player.vx,vy:game.player.vy,hp:game.player.hp,aim:game.player.aim});
+ }
  updateHUD();draw();requestAnimationFrame(loop)
 }
 load();setTimeout(()=>{if(profile){refreshLobby();show('lobby');initPeer()}else show('identity')},650);
