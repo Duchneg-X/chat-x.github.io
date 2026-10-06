@@ -1,1760 +1,261 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BEAN ROYALE 2v2: Online CS Tactical</title>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- PeerJS WebRTC Library for Peer-to-Peer Online Rooms -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Inter:wght@400;600;800&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #080c14;
-            color: #ffffff;
-            user-select: none;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        .font-teko {
-            font-family: 'Teko', sans-serif;
-        }
-
-        /* Custom Scrollbar for Buy Menu & Lobbies */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #f59e0b;
-            border-radius: 4px;
-        }
-
-        /* Glow Effects */
-        .glow-amber {
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
-        }
-        .glow-blue {
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
-        }
-        .glow-red {
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
-        }
-
-        canvas {
-            cursor: crosshair;
-        }
-
-        @keyframes pulse-fast {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.85; transform: scale(1.02); }
-        }
-        .animate-pulse-fast {
-            animation: pulse-fast 1.2s infinite ease-in-out;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BEAN DUEL — Lone Wolf 1v1</title>
+<style>
+:root{--bg:#070a10;--panel:#101722;--panel2:#151e2b;--line:#263246;--gold:#ffb21a;--gold2:#ffd45a;--red:#ff4b5c;--blue:#4da3ff;--green:#37df93}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#fff;font-family:Inter,system-ui,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}
+.screen{position:absolute;inset:0;display:none}.screen.active{display:flex}
+#boot{align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#24324b 0,#0c111a 45%,#05070b 100%)}
+.card{background:linear-gradient(145deg,#121b28ee,#090e16f2);border:1px solid #29364b;border-radius:22px;box-shadow:0 25px 80px #0009}
+#identity{align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 0,#33260c 0,#0b1018 48%,#05070a 100%)}
+.identity-card{width:min(560px,94vw);padding:34px}.logo{font-weight:1000;letter-spacing:5px;font-size:clamp(38px,9vw,72px);line-height:.9;color:var(--gold2);text-shadow:0 5px 30px #ffad0038}.sub{color:#8f9caf;margin:14px 0 28px}
+label{display:block;color:#aab4c4;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px}
+input{width:100%;background:#080d14;border:1px solid #2a3546;color:white;border-radius:12px;padding:14px 15px;outline:none}input:focus{border-color:var(--gold)}
+.btn{border:1px solid #354154;background:#182130;color:#fff;border-radius:12px;padding:12px 16px;font-weight:900}.btn:hover{filter:brightness(1.15)}.primary{background:linear-gradient(135deg,#ffb000,#ffd85a);color:#161006;border-color:#ffbf28}.danger{background:#32151b;border-color:#6c2730}.small{font-size:12px;padding:9px 12px}
+.err{height:18px;color:#ff7180;font-size:12px;margin-top:7px}.idbox{margin-top:18px;padding:13px;border:1px dashed #42516a;background:#0b111a;border-radius:12px;display:flex;justify-content:space-between;align-items:center}.mono{font-family:ui-monospace,monospace;letter-spacing:2px}
+#lobby{padding:20px;align-items:stretch;background:linear-gradient(135deg,#070b11,#0b111a 55%,#171109);overflow:auto}
+.lobby-wrap{width:min(1180px,100%);margin:auto}.topbar{display:flex;gap:15px;align-items:center;justify-content:space-between;padding:15px 18px;margin-bottom:15px}.profile{display:flex;align-items:center;gap:12px}.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#202b3a;border:2px solid var(--gold);font-size:25px}.nick{font-weight:1000}.muted{color:#7e8a9d;font-size:12px}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:15px}.panel{padding:22px}.panel h2{margin:0 0 5px;font-size:27px}.panel p{color:#8894a7;font-size:13px;line-height:1.55}.mode{padding:18px;border:1px solid #334157;background:linear-gradient(135deg,#171f2c,#0d131d);border-radius:17px;margin:18px 0}.mode-title{display:flex;justify-content:space-between;align-items:center}.tag{font-size:10px;padding:5px 8px;border-radius:8px;font-weight:1000;background:#ffb21a1b;color:var(--gold2);border:1px solid #ffb21a40}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:15px 0}.feature{padding:12px;border:1px solid #273447;border-radius:12px;background:#0b1119}.feature b{display:block;font-size:13px}.feature span{font-size:10px;color:#748196}.room{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}.roombox{background:#0b1119;border:1px solid #263247;border-radius:13px;padding:12px}.roomline{display:flex;gap:7px}.roomline input{padding:10px}.roomline .btn{white-space:nowrap}.status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green)}.dot{width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 12px var(--green)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{padding:16px;border:1px solid #29364a;border-radius:13px;background:#0a1018}.stat b{font-size:23px}.stat span{display:block;color:#778399;font-size:11px;text-transform:uppercase}
+#queue{align-items:center;justify-content:center;background:#05080de9;backdrop-filter:blur(9px);z-index:30}.queue{width:min(450px,92vw);padding:30px;text-align:center}.spinner{width:68px;height:68px;border:5px solid #3b2d12;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}@keyframes spin{to{transform:rotate(360deg)}}
+.queue h2{margin:0}.queue p{color:#8793a5;font-size:13px}.searchbar{height:7px;background:#202a39;border-radius:99px;overflow:hidden;margin:22px 0}.searchbar i{display:block;height:100%;width:35%;background:var(--gold);animation:scan 1.2s infinite}@keyframes scan{50%{margin-left:65%}}
+#matchfound{align-items:center;justify-content:center;background:#04070ceF;z-index:35}.vs{width:min(780px,94vw);padding:25px}.versus{display:grid;grid-template-columns:1fr 120px 1fr;align-items:center;gap:12px}.fighter{padding:22px;border-radius:18px;border:2px solid}.fighter.you{border-color:#2f80ff;background:#0b1a2e}.fighter.enemy{border-color:#ff4658;background:#2b0e14}.fighter h3{margin:0 0 7px}.fighter .big{font-size:42px;font-weight:1000}.vsword{text-align:center;font-size:30px;font-weight:1000;color:var(--gold2)}.count{margin-top:22px;text-align:center;color:#8794a8;font-size:13px}
+#game{background:#05080c}.gamecanvas{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;z-index:5;pointer-events:none}.top-hud{top:13px;left:50%;transform:translateX(-50%);width:min(760px,94vw)}.scorebar{display:grid;grid-template-columns:1fr 130px 1fr;align-items:center;background:#090f18e8;border:1px solid #334057;border-radius:14px;padding:8px 12px;box-shadow:0 12px 40px #0008}.score{font-size:26px;font-weight:1000}.score.blue{text-align:left;color:#65aaff}.score.red{text-align:right;color:#ff6673}.round{text-align:center;border-left:1px solid #263248;border-right:1px solid #263248}.round b{display:block;color:var(--gold2);font-size:12px}.round span{font-size:10px;color:#8591a4}.health{left:16px;bottom:16px;width:260px;background:#090f18e8;border:1px solid #334057;border-radius:15px;padding:12px}.bar{height:9px;background:#1d2735;border-radius:9px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--green);width:100%}.ammo{display:flex;justify-content:space-between;margin-top:10px}.ammo b{color:var(--gold2)}.controls{right:16px;bottom:16px;display:flex;gap:9px;align-items:end}.key{pointer-events:auto;background:#111a27dd;border:1px solid #34435a;color:#dce4ef;border-radius:12px;padding:10px 12px;text-align:center;min-width:63px;font-weight:1000;font-size:11px}.key strong{display:block;color:#fff;font-size:17px}.key.gloo{border-color:#36bfff88;color:#70d6ff}.key.fire{background:#ffb21a;color:#120d05;border-color:#ffd25c}
+#end{align-items:center;justify-content:center;background:#05080dec;z-index:40}.end{width:min(480px,92vw);padding:32px;text-align:center}.winner{font-size:56px;font-weight:1000;color:var(--gold2);letter-spacing:3px}.end .result{color:#8995a8;margin:8px 0 25px}
+.mobile{display:none}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.room{grid-template-columns:1fr}.features{grid-template-columns:1fr}.topbar{align-items:flex-start}.health{width:190px}.controls{right:8px;bottom:8px;gap:5px}.key{min-width:54px;padding:8px 6px}.versus{grid-template-columns:1fr 55px 1fr}.fighter{padding:13px}.fighter .big{font-size:27px}}
+@media(pointer:coarse){.mobile{display:block}.key{user-select:none}}
+</style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-center items-center bg-slate-950 text-white relative select-none">
+<body>
+<section id="boot" class="screen active"><div style="text-align:center"><div class="logo">BEAN DUEL</div><div class="sub">LONE WOLF • 1v1 TEST BUILD</div><div class="spinner"></div></div></section>
 
-    <!-- TITLE / LANDING SCREEN -->
-    <div id="screen-title" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950 p-6 text-center">
-        <div class="max-w-xl w-full flex flex-col items-center">
-            <div class="flex items-center gap-2 mb-3">
-                <span class="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full text-xs font-bold tracking-widest uppercase">2v2 Clash Squad Mode</span>
-                <span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/40 rounded-full text-xs font-bold tracking-widest uppercase">PeerJS WebRTC Multiplayer</span>
-            </div>
-            
-            <h1 class="text-7xl sm:text-9xl font-teko font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 drop-shadow-2xl leading-none uppercase mb-2">
-                BEAN ROYALE
-            </h1>
-            <p class="text-slate-400 text-sm sm:text-base mb-8 max-w-md">Master dynamic 2D platform combat, deploy Gloo Walls, buy tactical rifles, and duel online or against bots in 4-round matches.</p>
+<section id="identity" class="screen">
+ <div class="card identity-card">
+  <div class="logo">BEAN DUEL</div><div class="sub">Create your fighter identity. Nicknames are limited to 13 characters.</div>
+  <label for="nick">Unique nickname</label>
+  <input id="nick" maxlength="13" autocomplete="off" placeholder="Example: ShadowBean">
+  <div id="nickerr" class="err"></div>
+  <div class="idbox"><span><span class="muted">PLAYER ID</span><br><b id="newid" class="mono">BD-000000</b></span><button id="regen" class="btn small">NEW ID</button></div>
+  <button id="create" class="btn primary" style="width:100%;margin-top:18px;padding:15px">CREATE FIGHTER →</button>
+ </div>
+</section>
 
-            <button id="btn-enter-lobby" class="w-full sm:w-80 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-xl rounded-2xl shadow-xl glow-amber transition transform active:scale-95 flex items-center justify-center gap-3 uppercase tracking-wider">
-                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                Enter Battle Lobby
-            </button>
-
-            <div class="mt-8 flex items-center gap-6 text-xs text-slate-500">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> GitHub Pages Ready
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> LocalStorage Engine
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Web Audio SFX
-                </div>
-            </div>
-        </div>
+<section id="lobby" class="screen">
+ <div class="lobby-wrap">
+  <div class="card topbar">
+   <div class="profile"><div class="avatar">🫘</div><div><div id="lnick" class="nick">Player</div><div class="muted">ID <span id="lid" class="mono"></span> • LONE WOLF</div></div></div>
+   <div style="display:flex;gap:8px"><button id="copyid" class="btn small">COPY ID</button><button id="reset" class="btn small danger">RESET PROFILE</button></div>
+  </div>
+  <div class="grid">
+   <div class="card panel">
+    <div class="status"><i class="dot"></i> ONLINE TEST LOBBY</div>
+    <h2>1v1 Lone Wolf Duel</h2>
+    <p>Fight one opponent inside a wide steel-cage arena. No squads, no shop — just movement, aim, bullets and Gloo Wall cover.</p>
+    <div class="mode"><div class="mode-title"><b>⚔ LONE WOLF • 1v1</b><span class="tag">BEST OF 3</span></div><p style="margin:8px 0 0">First fighter to win 2 rounds takes the match. Each round lasts 90 seconds.</p></div>
+    <div class="features"><div class="feature"><b>← → / A D</b><span>MOVE</span></div><div class="feature"><b>SPACE / W</b><span>JUMP</span></div><div class="feature"><b>CLICK</b><span>FIRE</span></div></div>
+    <div class="features"><div class="feature"><b>F / GLOO</b><span>GLOO WALL</span></div><div class="feature"><b>R</b><span>RELOAD</span></div><div class="feature"><b>ESC</b><span>LEAVE</span></div></div>
+    <button id="quick" class="btn primary" style="width:100%;padding:16px;margin-top:14px">⚡ QUICK DUEL (BOT FALLBACK)</button>
+   </div>
+   <div class="card panel">
+    <h2>Online Room</h2><p>Create a room and give the code to a friend, or join their room.</p>
+    <div class="room">
+      <div class="roombox"><label>Your room</label><div class="roomline"><input id="roomcode" readonly><button id="copyroom" class="btn small">COPY</button></div><button id="host" class="btn" style="width:100%;margin-top:9px">CREATE / REFRESH ROOM</button></div>
+      <div class="roombox"><label>Friend's room</label><div class="roomline"><input id="joincode" maxlength="8" placeholder="BD-1234"><button id="join" class="btn primary small">JOIN</button></div><div id="netstatus" class="muted" style="margin-top:8px">PeerJS connecting…</div></div>
     </div>
-
-    <!-- MAIN LOBBY SCREEN -->
-    <div id="screen-lobby" class="hidden absolute inset-0 z-40 flex flex-col bg-slate-950 p-4 sm:p-6 overflow-y-auto">
-        <!-- Top Bar Header -->
-        <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900/90 backdrop-blur border border-slate-800 p-4 rounded-2xl mb-6 shadow-xl">
-            <!-- User Profile Header Card -->
-            <div class="flex items-center gap-4">
-                <div id="lobby-avatar" class="w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-3xl font-bold text-amber-400 shadow-inner">
-                    🫘
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span id="lobby-username" class="font-bold text-lg text-slate-100">BeanTactician</span>
-                        <span id="lobby-level-badge" class="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-md text-xs font-bold">LVL 1</span>
-                    </div>
-                    <div class="text-xs text-slate-400 mt-0.5">Rank: <span id="lobby-rank-name" class="text-amber-400 font-semibold">Bronze I</span></div>
-                </div>
-            </div>
-
-            <!-- Stats & Audio -->
-            <div class="flex items-center gap-4 sm:gap-6">
-                <!-- Coins -->
-                <div class="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-xl border border-slate-800">
-                    <span class="text-xl">🪙</span>
-                    <div>
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Coins</div>
-                        <div id="lobby-coins" class="text-amber-400 font-bold text-sm">1,200</div>
-                    </div>
-                </div>
-
-                <!-- Win Record -->
-                <div class="flex items-center gap-2 bg-slate-950/70 px-4 py-2 rounded-xl border border-slate-800">
-                    <span class="text-xl">🏆</span>
-                    <div>
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Victories</div>
-                        <div id="lobby-wins" class="text-emerald-400 font-bold text-sm">0 W / 0 L</div>
-                    </div>
-                </div>
-
-                <!-- Audio Toggle Button -->
-                <button id="btn-toggle-audio" class="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-slate-300 transition">
-                    <span id="audio-icon">🔊</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Lobby Core Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 mb-6">
-            <!-- Customization & Settings Panel -->
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">Player Handle & Loadout</h3>
-                    
-                    <!-- Skin Selector -->
-                    <div class="space-y-3 mb-6">
-                        <label class="text-xs text-slate-300 font-semibold">Select Bean Armor Tint:</label>
-                        <div class="grid grid-cols-4 gap-2" id="skin-selector">
-                            <button data-color="#f59e0b" class="skin-opt h-10 rounded-xl bg-amber-500 border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold text-slate-950">Amber</button>
-                            <button data-color="#3b82f6" class="skin-opt h-10 rounded-xl bg-blue-500 border-2 border-transparent hover:border-slate-400 transition flex items-center justify-center text-xs font-bold text-white">Blue</button>
-                            <button data-color="#10b981" class="skin-opt h-10 rounded-xl bg-emerald-500 border-2 border-transparent hover:border-slate-400 transition flex items-center justify-center text-xs font-bold text-white">Emerald</button>
-                            <button data-color="#ec4899" class="skin-opt h-10 rounded-xl bg-pink-500 border-2 border-transparent hover:border-slate-400 transition flex items-center justify-center text-xs font-bold text-white">Pink</button>
-                        </div>
-                    </div>
-
-                    <!-- Rename Box -->
-                    <div class="space-y-2 mb-6">
-                        <label class="text-xs text-slate-300 font-semibold">User Nickname:</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="input-username" maxlength="12" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 flex-1" placeholder="Enter username...">
-                            <button id="btn-save-name" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition">Save</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Controls Guide -->
-                <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
-                    <div class="font-bold text-amber-400 mb-1 uppercase tracking-wider">Tactical Controls:</div>
-                    <div><span class="text-slate-200 font-semibold">A / D</span> - Walk Left / Right</div>
-                    <div><span class="text-slate-200 font-semibold">W / Space</span> - Jump / Double Jump</div>
-                    <div><span class="text-slate-200 font-semibold">Shift</span> - Roll Dodge (Invulnerable)</div>
-                    <div><span class="text-slate-200 font-semibold">Left Click</span> - Fire Weapon</div>
-                    <div><span class="text-slate-200 font-semibold">E</span> - Buy Shop | <span class="text-slate-200 font-semibold">R</span> - Reload</div>
-                    <div><span class="text-slate-200 font-semibold">F</span> - Deploy Gloo Wall | <span class="text-slate-200 font-semibold">G</span> - Frag Grenade</div>
-                </div>
-            </div>
-
-            <!-- Online Room & Game Mode Selection -->
-            <div class="lg:col-span-2 bg-gradient-to-br from-slate-900/90 via-slate-900 to-amber-950/30 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden">
-                <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold uppercase">
-                            CS Clash Squad 2v2
-                        </div>
-                        <span id="p2p-status-badge" class="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold uppercase">
-                            ● P2P Ready
-                        </span>
-                    </div>
-
-                    <h2 class="text-4xl sm:text-5xl font-teko font-bold uppercase tracking-wider text-slate-100">
-                        TACTICAL CLASH SQUAD
-                    </h2>
-                    <p class="text-slate-300 text-sm max-w-md mt-1">
-                        First squad to <span class="text-amber-400 font-bold">4 Round Victories</span> wins! Create or join a PeerJS room code for true 2v2 online peer multiplayer, or instantly play vs Bots.
-                    </p>
-
-                    <!-- ONLINE PEER ROOM CONTROLS -->
-                    <div class="mt-6 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3">
-                        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Online Peer-to-Peer Room Hub:</div>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <!-- Host Room Box -->
-                            <div class="flex flex-col gap-1.5 p-3 bg-slate-900 border border-slate-800 rounded-xl">
-                                <span class="text-[10px] text-slate-400 uppercase font-semibold">Host Room Code:</span>
-                                <div class="flex gap-2">
-                                    <input type="text" id="host-code-display" readonly class="bg-slate-950 text-amber-400 font-mono text-xs px-2.5 py-1.5 rounded-lg border border-slate-800 flex-1 font-bold" value="Generating...">
-                                    <button id="btn-copy-code" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700">Copy</button>
-                                </div>
-                            </div>
-
-                            <!-- Join Room Box -->
-                            <div class="flex flex-col gap-1.5 p-3 bg-slate-900 border border-slate-800 rounded-xl">
-                                <span class="text-[10px] text-slate-400 uppercase font-semibold">Join Peer Room Code:</span>
-                                <div class="flex gap-2">
-                                    <input type="text" id="input-join-code" class="bg-slate-950 text-slate-200 uppercase font-mono text-xs px-2.5 py-1.5 rounded-lg border border-slate-800 flex-1 focus:outline-none focus:border-amber-500" placeholder="Paste Code...">
-                                    <button id="btn-join-peer" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Connect</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Match Specs Cards -->
-                <div class="grid grid-cols-3 gap-3 my-6">
-                    <div class="bg-slate-950/70 border border-slate-800 p-3 rounded-xl text-center">
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Format</div>
-                        <div class="text-sm font-bold text-slate-200">2v2 Squads</div>
-                    </div>
-                    <div class="bg-slate-950/70 border border-slate-800 p-3 rounded-xl text-center">
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Victory Goal</div>
-                        <div class="text-sm font-bold text-amber-400">First to 4 Wins</div>
-                    </div>
-                    <div class="bg-slate-950/70 border border-slate-800 p-3 rounded-xl text-center">
-                        <div class="text-[10px] text-slate-400 uppercase font-bold">Engine</div>
-                        <div class="text-sm font-bold text-slate-200">HTML5 + PeerJS</div>
-                    </div>
-                </div>
-
-                <!-- Start Action Button -->
-                <button id="btn-start-matchmaking" class="w-full py-5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-teko text-3xl font-bold tracking-widest rounded-2xl shadow-2xl glow-amber transition transform active:scale-98 flex items-center justify-center gap-3 uppercase">
-                    <span>⚡ START 2v2 MATCHMAKING</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MATCHMAKING QUEUE OVERLAY -->
-    <div id="screen-matchmaking" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md p-6">
-        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl flex flex-col items-center">
-            <div class="w-20 h-20 rounded-full border-4 border-amber-500 border-t-transparent animate-spin mb-6"></div>
-            <h3 class="text-2xl font-teko font-bold text-slate-100 tracking-wider uppercase mb-1">SEARCHING FOR 2v2 MATCH</h3>
-            <p id="mm-status-text" class="text-xs text-slate-400 mb-6">Reading player profile & local combat stats...</p>
-
-            <div class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-6 space-y-2">
-                <div class="flex justify-between text-xs text-slate-400">
-                    <span>Matchmaking Mode:</span>
-                    <span id="mm-mode-type" class="text-amber-400 font-bold">Local / AI Fallback</span>
-                </div>
-                <div class="flex justify-between text-xs text-slate-400">
-                    <span>Server Connection:</span>
-                    <span class="text-emerald-400 font-bold">PeerJS WebRTC Signal</span>
-                </div>
-            </div>
-
-            <button id="btn-cancel-mm" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 transition">
-                Cancel Matchmaking
-            </button>
-        </div>
-    </div>
-
-    <!-- VERSUS SCREEN BEFORE COMBAT -->
-    <div id="screen-vs" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-between bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 sm:p-10">
-        <div class="text-center">
-            <span class="px-4 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full text-xs font-bold tracking-widest uppercase">MATCH FOUND</span>
-            <h2 class="text-5xl sm:text-6xl font-teko font-bold text-slate-100 tracking-wider uppercase mt-1">BLUE SQUAD VS RED SQUAD</h2>
-        </div>
-
-        <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 my-auto">
-            <!-- Team Blue Card -->
-            <div class="bg-blue-950/40 border-2 border-blue-500/50 rounded-2xl p-5 shadow-2xl glow-blue">
-                <div class="flex justify-between items-center mb-4 border-b border-blue-500/30 pb-2">
-                    <span class="text-lg font-bold text-blue-400 tracking-wider">TEAM BLUE</span>
-                    <span class="text-xs text-blue-300/70 font-semibold uppercase">YOUR SQUAD</span>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-blue-500/30">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">🫘</span>
-                            <div>
-                                <div id="vs-p1-name" class="font-bold text-sm text-slate-100">Player</div>
-                                <div id="vs-p1-rank" class="text-[10px] text-amber-400">LVL 1 - Bronze</div>
-                            </div>
-                        </div>
-                        <span class="text-xs font-bold text-blue-400 bg-blue-500/20 px-2.5 py-1 rounded-md">YOU</span>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">🤖</span>
-                            <div>
-                                <div id="vs-p2-name" class="font-bold text-sm text-slate-100">BeanBot Alpha</div>
-                                <div class="text-[10px] text-slate-400">Teammate</div>
-                            </div>
-                        </div>
-                        <span id="vs-p2-badge" class="text-xs font-bold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md">BOT</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Team Red Card -->
-            <div class="bg-red-950/40 border-2 border-red-500/50 rounded-2xl p-5 shadow-2xl glow-red">
-                <div class="flex justify-between items-center mb-4 border-b border-red-500/30 pb-2">
-                    <span class="text-lg font-bold text-red-400 tracking-wider">TEAM RED</span>
-                    <span class="text-xs text-red-300/70 font-semibold uppercase">OPPONENTS</span>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">😈</span>
-                            <div>
-                                <div class="font-bold text-sm text-slate-100">BeanViper</div>
-                                <div class="text-[10px] text-red-400">Tactical Rival</div>
-                            </div>
-                        </div>
-                        <span class="text-xs font-bold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-md">ENEMY</span>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">💀</span>
-                            <div>
-                                <div class="font-bold text-sm text-slate-100">BeanShadow</div>
-                                <div class="text-[10px] text-red-400">Tactical Rival</div>
-                            </div>
-                        </div>
-                        <span class="text-xs font-bold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-md">ENEMY</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="text-xs text-slate-400 animate-pulse">Entering combat arena in <span id="vs-countdown" class="text-amber-400 font-bold text-base">3</span>s...</div>
-    </div>
-
-    <!-- GAMEPLAY CONTAINER -->
-    <div id="game-container" class="relative w-full h-full hidden overflow-hidden">
-        <!-- Canvas for 2D Physics & Rendering -->
-        <canvas id="gameCanvas" class="w-full h-full block bg-slate-950"></canvas>
-
-        <!-- TOP ROUND SCOREBOARD HUD -->
-        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center bg-slate-900/90 border border-slate-800 backdrop-blur-md px-6 py-2 rounded-2xl shadow-2xl gap-6">
-            <!-- Blue Score -->
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">BLUE</span>
-                <span id="score-blue" class="text-3xl font-teko font-bold text-blue-400 leading-none">0</span>
-            </div>
-
-            <!-- Round Counter -->
-            <div class="flex flex-col items-center border-x border-slate-800 px-4">
-                <span id="hud-round-num" class="text-xs font-bold text-amber-400 tracking-wider">ROUND 1</span>
-                <span id="hud-round-timer" class="text-lg font-teko font-bold text-slate-200">01:30</span>
-            </div>
-
-            <!-- Red Score -->
-            <div class="flex items-center gap-3">
-                <span id="score-red" class="text-3xl font-teko font-bold text-red-400 leading-none">0</span>
-                <span class="text-xs font-bold text-red-400 uppercase tracking-wider">RED</span>
-            </div>
-        </div>
-
-        <!-- PLAYER STATUS & HUD OVERLAY (Bottom Left) -->
-        <div class="absolute bottom-4 left-4 z-20 bg-slate-900/90 border border-slate-800 backdrop-blur-md p-4 rounded-2xl shadow-2xl w-64 space-y-2">
-            <div>
-                <div class="flex justify-between text-xs font-bold mb-1">
-                    <span class="text-emerald-400">HEALTH</span>
-                    <span id="hud-hp-val" class="text-slate-200">100 / 100</span>
-                </div>
-                <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                    <div id="hud-hp-bar" class="h-full bg-emerald-500 transition-all duration-200" style="width: 100%;"></div>
-                </div>
-            </div>
-
-            <div>
-                <div class="flex justify-between text-xs font-bold mb-1">
-                    <span class="text-blue-400">ARMOR</span>
-                    <span id="hud-armor-val" class="text-slate-200">0 / 100</span>
-                </div>
-                <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                    <div id="hud-armor-bar" class="h-full bg-blue-500 transition-all duration-200" style="width: 0%;"></div>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-                <div>
-                    <div id="hud-weapon-name" class="text-sm font-bold text-amber-400">Pistol</div>
-                    <div class="text-[10px] text-slate-400">Credits: $<span id="hud-credits">800</span></div>
-                </div>
-                <div id="hud-ammo" class="text-2xl font-teko font-bold text-slate-100">12 / ∞</div>
-            </div>
-        </div>
-
-        <!-- TACTICAL ABILITIES HUD (Bottom Right) -->
-        <div class="absolute bottom-4 right-4 z-20 flex gap-3">
-            <div class="bg-slate-900/90 border border-slate-800 backdrop-blur-md p-3 rounded-2xl flex flex-col items-center justify-center min-w-[70px]">
-                <span class="text-xs text-slate-400 font-bold mb-1">[F] GLOO</span>
-                <span id="hud-gloo-count" class="text-xl font-bold text-amber-400">🛡️ 1</span>
-            </div>
-            <div class="bg-slate-900/90 border border-slate-800 backdrop-blur-md p-3 rounded-2xl flex flex-col items-center justify-center min-w-[70px]">
-                <span class="text-xs text-slate-400 font-bold mb-1">[G] NADE</span>
-                <span id="hud-nade-count" class="text-xl font-bold text-red-400">💣 1</span>
-            </div>
-            <button id="btn-open-buy" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-3 rounded-2xl flex items-center justify-center shadow-lg transition text-xs tracking-wider">
-                [E] BUY MENU
-            </button>
-        </div>
-
-        <!-- KILL FEED OVERLAY -->
-        <div id="kill-feed" class="absolute top-4 right-4 z-20 flex flex-col gap-1.5 pointer-events-none max-w-xs"></div>
-
-        <!-- ANNOUNCER BANNER OVERLAY -->
-        <div id="announcer-banner" class="hidden absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none text-center">
-            <h2 id="announcer-text" class="text-6xl font-teko font-bold text-amber-400 tracking-widest drop-shadow-2xl uppercase">
-                ROUND START
-            </h2>
-        </div>
-
-        <!-- ROUND BUY MENU OVERLAY -->
-        <div id="buy-menu" class="hidden absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div class="max-w-3xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
-                <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <div>
-                        <h3 class="text-2xl font-teko font-bold text-slate-100 uppercase tracking-wider">CS FREEZE PHASE SHOP</h3>
-                        <p class="text-xs text-slate-400">Round Credits: <span id="shop-credits" class="text-emerald-400 font-bold">$800</span></p>
-                    </div>
-                    <button id="btn-close-buy" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700">
-                        Close [ESC/E]
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-1">
-                    <!-- Pistol -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">Glock Pistol</div>
-                            <div class="text-[10px] text-slate-400">Balanced sidearm</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">FREE</span>
-                            <button data-weapon="pistol" class="btn-buy px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700">Equip</button>
-                        </div>
-                    </div>
-
-                    <!-- SMG -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">MP5 SMG</div>
-                            <div class="text-[10px] text-slate-400">Rapid fire, close range</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$1,200</span>
-                            <button data-weapon="smg" class="btn-buy px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- AK47 -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">AK-47 Rifle</div>
-                            <div class="text-[10px] text-slate-400">High power assault rifle</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$2,100</span>
-                            <button data-weapon="ak47" class="btn-buy px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- Shotgun -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">M1887 Shotgun</div>
-                            <div class="text-[10px] text-slate-400">Deadly pellet burst</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$1,800</span>
-                            <button data-weapon="shotgun" class="btn-buy px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- Sniper -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">AWM Sniper</div>
-                            <div class="text-[10px] text-slate-400">Heavy sniper rifle</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$3,500</span>
-                            <button data-weapon="sniper" class="btn-buy px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- Kevlar Armor -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">Kevlar Vest</div>
-                            <div class="text-[10px] text-slate-400">+100 Armor Protection</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$600</span>
-                            <button data-buy="armor" class="btn-buy-utility px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- Gloo Wall Shield -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">Gloo Wall Shield</div>
-                            <div class="text-[10px] text-slate-400">Deployable cover wall</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$400</span>
-                            <button data-buy="gloo" class="btn-buy-utility px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-
-                    <!-- Frag Grenade -->
-                    <div class="buy-item bg-slate-950 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
-                        <div>
-                            <div class="font-bold text-sm text-slate-200">Frag Grenade</div>
-                            <div class="text-[10px] text-slate-400">High explosion radius</div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-emerald-400 font-bold text-xs">$300</span>
-                            <button data-buy="nade" class="btn-buy-utility px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition">Buy</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MATCH END RESULT OVERLAY -->
-        <div id="screen-match-end" class="hidden absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex flex-col items-center justify-center p-6 text-center">
-            <h2 id="end-result-title" class="text-7xl font-teko font-bold tracking-widest uppercase mb-2 text-amber-400">
-                VICTORY
-            </h2>
-            <p id="end-result-subtitle" class="text-slate-300 text-sm mb-6">Your squad secured 4 round victories!</p>
-
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full mb-6 space-y-3">
-                <div class="flex justify-between text-sm">
-                    <span class="text-slate-400">Coins Earned:</span>
-                    <span id="end-coins-earned" class="text-amber-400 font-bold">+600 🪙</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-slate-400">Total Kills:</span>
-                    <span id="end-total-kills" class="text-slate-100 font-bold">0</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-slate-400">Rank Level:</span>
-                    <span id="end-rank-progress" class="text-emerald-400 font-bold">LVL 1</span>
-                </div>
-            </div>
-
-            <button id="btn-return-lobby" class="px-8 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-base rounded-xl shadow-lg glow-amber transition uppercase tracking-wider">
-                Return to Lobby
-            </button>
-        </div>
-    </div>
-
-    <script>
-        /* ==========================================================================
-           1. USER PROFILE STORAGE SYSTEM
-           ========================================================================== */
-        const STORAGE_KEY = 'BEAN_ROYALE_USER_DATA_V1';
-        let userProfile = {
-            username: 'BeanTactician',
-            skinColor: '#f59e0b',
-            coins: 1200,
-            wins: 0,
-            losses: 0,
-            level: 1,
-            audioEnabled: true
-        };
-
-        function saveUserProfile() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
-            } catch (e) {
-                console.warn('LocalStorage save error:', e);
-            }
-        }
-
-        /* ==========================================================================
-           2. PEERJS ONLINE MULTIPLAYER ENGINE & LOCAL FALLBACK
-           ========================================================================== */
-        let peer = null;
-        let peerConn = null;
-        let isPeerHost = false;
-        let myPeerId = null;
-        let localChannel = null;
-        let isP2pActive = false;
-
-        function initPeerJS() {
-            // Generate simple room code
-            const randomCode = 'BEAN-' + Math.floor(1000 + Math.random() * 9000);
-            
-            // Setup BroadcastChannel fallback for multi-tab playing without external WebSockets
-            try {
-                if ('BroadcastChannel' in window) {
-                    localChannel = new BroadcastChannel('BEAN_ROYALE_LOCAL_ROOM');
-                    localChannel.onmessage = (event) => handleNetworkData(event.data);
-                }
-            } catch (e) {
-                console.warn('BroadcastChannel setup:', e);
-            }
-
-            try {
-                // Initialize PeerJS with fallback error handling for restricted iframe sandboxes
-                peer = new Peer(randomCode, {
-                    debug: 1,
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' }
-                        ]
-                    }
-                });
-
-                peer.on('open', (id) => {
-                    myPeerId = id;
-                    const hostInput = document.getElementById('host-code-display');
-                    if (hostInput) hostInput.value = id;
-                    updateP2pBadge('● P2P Ready', 'text-emerald-400', 'bg-emerald-500/20', 'border-emerald-500/30');
-                });
-
-                peer.on('connection', (conn) => {
-                    peerConn = conn;
-                    isPeerHost = true;
-                    isP2pActive = true;
-                    setupPeerDataListeners();
-                    updateP2pBadge('● Peer Connected', 'text-emerald-400', 'bg-emerald-500/20', 'border-emerald-500/30');
-                    const vsP2Name = document.getElementById('vs-p2-name');
-                    const vsP2Badge = document.getElementById('vs-p2-badge');
-                    if (vsP2Name) vsP2Name.innerText = 'Online Teammate';
-                    if (vsP2Badge) vsP2Badge.innerText = 'P2P';
-                });
-
-                peer.on('error', (err) => {
-                    console.warn('PeerJS connection error/restricted:', err);
-                    handlePeerFallback(randomCode);
-                });
-            } catch (err) {
-                console.warn('PeerJS WebSocket restricted in environment:', err);
-                handlePeerFallback(randomCode);
-            }
-        }
-
-        function handlePeerFallback(fallbackCode) {
-            const hostInput = document.getElementById('host-code-display');
-            if (hostInput) hostInput.value = fallbackCode + '-LOCAL';
-            updateP2pBadge('● Local / Bot Mode', 'text-amber-400', 'bg-amber-500/20', 'border-amber-500/30');
-        }
-
-        function updateP2pBadge(text, textCls, bgCls, borderCls) {
-            const badge = document.getElementById('p2p-status-badge');
-            if (badge) {
-                badge.innerText = text;
-                badge.className = `px-3 py-1 ${bgCls} ${textCls} border ${borderCls} rounded-full text-xs font-bold uppercase`;
-            }
-        }
-
-        function connectToPeerRoom(targetCode) {
-            targetCode = targetCode.toUpperCase().trim();
-            if (!targetCode) return;
-
-            // Local multi-tab connection via BroadcastChannel
-            if (targetCode.endsWith('-LOCAL') && localChannel) {
-                localChannel.postMessage({ type: 'JOIN_REQUEST', code: targetCode });
-                updateP2pBadge('● Local Tab Connected', 'text-emerald-400', 'bg-emerald-500/20', 'border-emerald-500/30');
-                const p2Name = document.getElementById('vs-p2-name');
-                const p2Badge = document.getElementById('vs-p2-badge');
-                if (p2Name) p2Name.innerText = 'Local Teammate';
-                if (p2Badge) p2Badge.innerText = 'LOCAL';
-                alert('Connected via Local Browser Channel to Room: ' + targetCode);
-                return;
-            }
-
-            if (!peer || peer.destroyed) {
-                alert('WebSockets restricted in this preview window. Game running in Local / Bot Mode.');
-                return;
-            }
-
-            try {
-                peerConn = peer.connect(targetCode);
-                isPeerHost = false;
-
-                peerConn.on('open', () => {
-                    isP2pActive = true;
-                    setupPeerDataListeners();
-                    updateP2pBadge('● Connected to Host', 'text-emerald-400', 'bg-emerald-500/20', 'border-emerald-500/30');
-                    const p2Name = document.getElementById('vs-p2-name');
-                    const p2Badge = document.getElementById('vs-p2-badge');
-                    if (p2Name) p2Name.innerText = 'Host Teammate';
-                    if (p2Badge) p2Badge.innerText = 'P2P';
-                    alert('Connected successfully to Peer Room: ' + targetCode);
-                });
-
-                peerConn.on('error', (err) => {
-                    console.warn('Peer connection error:', err);
-                    alert('Could not connect to room. Defaulting to Local AI Mode.');
-                });
-            } catch (e) {
-                console.warn('Peer connect error:', e);
-                alert('WebSockets restricted in current canvas. Running in Local AI Mode.');
-            }
-        }
-
-        function handleNetworkData(data) {
-            if (!data) return;
-            if (data.type === 'PLAYER_SYNC' && characters[1] && !isPeerHost) {
-                characters[1].x = data.x;
-                characters[1].y = data.y;
-                characters[1].aimAngle = data.aimAngle;
-                characters[1].hp = data.hp;
-            }
-        }
-
-        function setupPeerDataListeners() {
-            if (!peerConn) return;
-            peerConn.on('data', (data) => handleNetworkData(data));
-        }
-
-        function sendPeerSync(x, y, aimAngle, hp) {
-            const payload = { type: 'PLAYER_SYNC', x, y, aimAngle, hp };
-            if (peerConn && peerConn.open) {
-                peerConn.send(payload);
-            } else if (localChannel) {
-                localChannel.postMessage(payload);
-            }
-        }
-
-        function loadUserProfile() {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    userProfile = { ...userProfile, ...JSON.parse(stored) };
-                }
-            } catch (e) {
-                console.warn('LocalStorage load error:', e);
-            }
-        }
-
-        /* ==========================================================================
-           2. SYNTHESIZED WEB AUDIO API SYSTEM
-           ========================================================================== */
-        class SoundEngine {
-            constructor() {
-                this.ctx = null;
-            }
-
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            }
-
-            playGunshot(type) {
-                if (!userProfile.audioEnabled) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                if (type === 'sniper') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(320, now);
-                    osc.frequency.exponentialRampToValueAtTime(35, now + 0.35);
-                    gain.gain.setValueAtTime(0.5, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                    osc.start(now);
-                    osc.stop(now + 0.35);
-                } else if (type === 'shotgun') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.25);
-                    gain.gain.setValueAtTime(0.4, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-                    osc.start(now);
-                    osc.stop(now + 0.25);
-                } else {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(420, now);
-                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.12);
-                    gain.gain.setValueAtTime(0.3, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    osc.start(now);
-                    osc.stop(now + 0.12);
-                }
-            }
-
-            playHit() {
-                if (!userProfile.audioEnabled) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.08);
-            }
-
-            playExplosion() {
-                if (!userProfile.audioEnabled) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
-                gain.gain.setValueAtTime(0.6, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.5);
-            }
-        }
-        const audio = new SoundEngine();
-
-        /* ==========================================================================
-           3. WEAPONS DEFINITIONS & GAME CONSTANTS
-           ========================================================================== */
-        const WEAPONS = {
-            pistol:  { name: 'Glock Pistol', damage: 22, fireRate: 250, ammoMax: 12, reloadTime: 1200, spread: 0.04, speed: 18, color: '#f59e0b', price: 0 },
-            smg:     { name: 'MP5 SMG',     damage: 18, fireRate: 110, ammoMax: 30, reloadTime: 1400, spread: 0.08, speed: 20, color: '#3b82f6', price: 1200 },
-            ak47:    { name: 'AK-47 Rifle', damage: 34, fireRate: 160, ammoMax: 30, reloadTime: 1600, spread: 0.05, speed: 22, color: '#10b981', price: 2100 },
-            shotgun: { name: 'M1887 Shotgun', damage: 16, pellets: 6, fireRate: 750, ammoMax: 6, reloadTime: 1800, spread: 0.18, speed: 16, color: '#ec4899', price: 1800 },
-            sniper:  { name: 'AWM Sniper',  damage: 95, fireRate: 1100, ammoMax: 5, reloadTime: 2200, spread: 0.01, speed: 28, color: '#a855f7', price: 3500 }
-        };
-
-        /* ==========================================================================
-           5. GAME STATE & ARENA SETUP
-           ========================================================================== */
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        let gameState = 'TITLE';
-        let roundState = 'FREEZE';
-        let roundTimeLeft = 90;
-        let roundTimerInterval = null;
-
-        let blueScore = 0;
-        let redScore = 0;
-        let roundNumber = 1;
-        let playerKillsThisMatch = 0;
-
-        let platforms = [];
-        let glooWalls = [];
-        let bullets = [];
-        let particles = [];
-        let grenades = [];
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            setupArenaPlatforms();
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        function setupArenaPlatforms() {
-            const w = canvas.width;
-            const h = canvas.height;
-            const groundY = h - 60;
-
-            platforms = [
-                { x: 0, y: groundY, width: w, height: 60, type: 'ground' },
-                { x: w * 0.35, y: groundY - 140, width: w * 0.3, height: 20, type: 'wood' },
-                { x: w * 0.1, y: groundY - 100, width: w * 0.2, height: 18, type: 'wood' },
-                { x: w * 0.7, y: groundY - 100, width: w * 0.2, height: 18, type: 'wood' },
-                { x: w * 0.48, y: groundY - 50, width: 60, height: 50, type: 'cover' }
-            ];
-        }
-
-        /* ==========================================================================
-           6. KILLER BEAN CHARACTER CLASS
-           ========================================================================== */
-        class BeanCharacter {
-            constructor(id, name, team, isPlayer, skinColor, spawnX) {
-                this.id = id;
-                this.name = name;
-                this.team = team;
-                this.isPlayer = isPlayer;
-                this.skinColor = skinColor;
-
-                this.x = spawnX;
-                this.y = canvas.height - 120;
-                this.width = 32;
-                this.height = 48;
-
-                this.vx = 0;
-                this.vy = 0;
-                this.speed = 5.5;
-                this.jumpStrength = -12;
-                this.isGrounded = false;
-                this.jumpCount = 0;
-
-                this.isRolling = false;
-                this.rollTimer = 0;
-                this.rollAngle = 0;
-
-                this.hp = 100;
-                this.maxHp = 100;
-                this.armor = 0;
-                this.credits = 800;
-                this.glooCount = 1;
-                this.nadeCount = 1;
-
-                this.weaponKey = 'pistol';
-                this.weapon = WEAPONS['pistol'];
-                this.currentAmmo = this.weapon.ammoMax;
-                this.isReloading = false;
-                this.lastShotTime = 0;
-
-                this.aimAngle = 0;
-            }
-
-            resetForNewRound(spawnX) {
-                this.x = spawnX;
-                this.y = canvas.height - 120;
-                this.vx = 0;
-                this.vy = 0;
-                this.hp = this.maxHp;
-                this.currentAmmo = this.weapon.ammoMax;
-                this.isReloading = false;
-                this.isRolling = false;
-            }
-
-            update(keys, mousePos) {
-                if (this.hp <= 0) return;
-
-                this.vy += 0.55; // Gravity
-
-                if (this.isPlayer) {
-                    this.handlePlayerInput(keys, mousePos);
-                    sendPeerSync(this.x, this.y, this.aimAngle, this.hp);
-                } else {
-                    this.handleAIBehavior();
-                }
-
-                if (this.isRolling) {
-                    this.rollTimer--;
-                    this.rollAngle += (this.vx > 0 ? 0.3 : -0.3);
-                    if (this.rollTimer <= 0) {
-                        this.isRolling = false;
-                        this.rollAngle = 0;
-                    }
-                }
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                this.isGrounded = false;
-
-                if (this.x < 10) this.x = 10;
-                if (this.x + this.width > canvas.width - 10) this.x = canvas.width - 10 - this.width;
-
-                for (let plat of platforms) {
-                    if (
-                        this.x + this.width > plat.x &&
-                        this.x < plat.x + plat.width &&
-                        this.y + this.height >= plat.y &&
-                        this.y + this.height <= plat.y + 20 &&
-                        this.vy >= 0
-                    ) {
-                        this.y = plat.y - this.height;
-                        this.vy = 0;
-                        this.isGrounded = true;
-                        this.jumpCount = 0;
-                    }
-                }
-
-                for (let wall of glooWalls) {
-                    if (
-                        this.x + this.width > wall.x &&
-                        this.x < wall.x + wall.width &&
-                        this.y + this.height > wall.y &&
-                        this.y < wall.y + wall.height
-                    ) {
-                        if (this.vx > 0) this.x = wall.x - this.width;
-                        else if (this.vx < 0) this.x = wall.x + wall.width;
-                    }
-                }
-            }
-
-            handlePlayerInput(keys, mousePos) {
-                if (!this.isRolling) {
-                    if (keys['a'] || keys['A'] || keys['ArrowLeft']) this.vx = -this.speed;
-                    else if (keys['d'] || keys['D'] || keys['ArrowRight']) this.vx = this.speed;
-                    else this.vx *= 0.7;
-                }
-
-                const centerX = this.x + this.width / 2;
-                const centerY = this.y + this.height / 2;
-                this.aimAngle = Math.atan2(mousePos.y - centerY, mousePos.x - centerX);
-
-                if ((keys['Shift']) && !this.isRolling && Math.abs(this.vx) > 0.5) {
-                    this.isRolling = true;
-                    this.rollTimer = 20;
-                    this.vx *= 1.8;
-                }
-            }
-
-            handleAIBehavior() {
-                let targets = characters.filter(c => c.team !== this.team && c.hp > 0);
-                if (targets.length === 0) return;
-
-                let nearest = targets[0];
-                let minDist = Math.hypot(nearest.x - this.x, nearest.y - this.y);
-
-                for (let t of targets) {
-                    let d = Math.hypot(t.x - this.x, t.y - this.y);
-                    if (d < minDist) {
-                        minDist = d;
-                        nearest = t;
-                    }
-                }
-
-                const centerX = this.x + this.width / 2;
-                const centerY = this.y + this.height / 2;
-                const targetX = nearest.x + nearest.width / 2;
-                const targetY = nearest.y + nearest.height / 2;
-                this.aimAngle = Math.atan2(targetY - centerY, targetX - centerX);
-
-                if (minDist > 250) {
-                    this.vx = (targetX > centerX) ? this.speed * 0.7 : -this.speed * 0.7;
-                } else if (minDist < 100) {
-                    this.vx = (targetX > centerX) ? -this.speed * 0.7 : this.speed * 0.7;
-                } else {
-                    this.vx *= 0.8;
-                }
-
-                if (Math.random() < 0.02 && this.isGrounded) {
-                    this.vy = this.jumpStrength;
-                }
-
-                if (roundState === 'COMBAT' && minDist < 500 && Math.random() < 0.08) {
-                    this.shootWeapon();
-                }
-            }
-
-            jump() {
-                if (this.isGrounded) {
-                    this.vy = this.jumpStrength;
-                    this.jumpCount = 1;
-                } else if (this.jumpCount === 1) {
-                    this.vy = this.jumpStrength * 0.9;
-                    this.jumpCount = 2;
-                    createParticles(this.x + this.width / 2, this.y + this.height, '#ffffff', 8);
-                }
-            }
-
-            shootWeapon() {
-                if (this.isReloading || this.currentAmmo <= 0 || roundState !== 'COMBAT') return;
-
-                const now = Date.now();
-                if (now - this.lastShotTime < this.weapon.fireRate) return;
-                this.lastShotTime = now;
-
-                this.currentAmmo--;
-                audio.playGunshot(this.weaponKey);
-
-                const centerX = this.x + this.width / 2;
-                const centerY = this.y + this.height / 2;
-
-                const pelletCount = this.weapon.pellets || 1;
-                for (let i = 0; i < pelletCount; i++) {
-                    const spreadAngle = this.aimAngle + (Math.random() - 0.5) * this.weapon.spread;
-                    bullets.push({
-                        x: centerX,
-                        y: centerY,
-                        vx: Math.cos(spreadAngle) * this.weapon.speed,
-                        vy: Math.sin(spreadAngle) * this.weapon.speed,
-                        damage: this.weapon.damage,
-                        team: this.team,
-                        ownerId: this.id,
-                        color: this.weapon.color
-                    });
-                }
-
-                if (this.isPlayer) updateHud();
-
-                if (this.currentAmmo <= 0) {
-                    this.reload();
-                }
-            }
-
-            reload() {
-                if (this.isReloading) return;
-                this.isReloading = true;
-                setTimeout(() => {
-                    this.currentAmmo = this.weapon.ammoMax;
-                    this.isReloading = false;
-                    if (this.isPlayer) updateHud();
-                }, this.weapon.reloadTime);
-            }
-
-            deployGlooWall() {
-                if (this.glooCount <= 0 || roundState !== 'COMBAT') return;
-                this.glooCount--;
-
-                const spawnX = this.x + (Math.cos(this.aimAngle) > 0 ? 50 : -60);
-                const groundY = canvas.height - 60;
-
-                glooWalls.push({
-                    x: spawnX,
-                    y: groundY - 90,
-                    width: 20,
-                    height: 90,
-                    hp: 300,
-                    maxHp: 300,
-                    team: this.team
-                });
-
-                if (this.isPlayer) updateHud();
-            }
-
-            throwGrenade() {
-                if (this.nadeCount <= 0 || roundState !== 'COMBAT') return;
-                this.nadeCount--;
-
-                const centerX = this.x + this.width / 2;
-                const centerY = this.y + this.height / 2;
-
-                grenades.push({
-                    x: centerX,
-                    y: centerY,
-                    vx: Math.cos(this.aimAngle) * 12,
-                    vy: Math.sin(this.aimAngle) * 12,
-                    timer: 90,
-                    ownerTeam: this.team
-                });
-
-                if (this.isPlayer) updateHud();
-            }
-
-            takeDamage(amount, attackerName, attackerTeam) {
-                if (this.hp <= 0 || this.isRolling) return;
-
-                if (this.armor > 0) {
-                    const absorbed = Math.min(this.armor, amount * 0.5);
-                    this.armor -= absorbed;
-                    amount -= absorbed;
-                }
-
-                this.hp -= amount;
-                audio.playHit();
-
-                if (this.isPlayer) updateHud();
-
-                if (this.hp <= 0) {
-                    this.hp = 0;
-                    this.onDefeated(attackerName, attackerTeam);
-                }
-            }
-
-            onDefeated(attackerName, attackerTeam) {
-                createParticles(this.x + this.width / 2, this.y + this.height / 2, this.skinColor, 25);
-                addKillFeed(attackerName, attackerTeam, this.name, this.team);
-                checkRoundEndCondition();
-            }
-
-            draw() {
-                if (this.hp <= 0) return;
-
-                ctx.save();
-                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-
-                if (this.isRolling) {
-                    ctx.rotate(this.rollAngle);
-                }
-
-                ctx.fillStyle = this.team === 'blue' ? '#3b82f6' : '#ef4899';
-                ctx.beginPath();
-                ctx.arc(0, 0, 20, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = this.skinColor;
-                ctx.beginPath();
-                ctx.roundRect(-14, -22, 28, 44, 14);
-                ctx.fill();
-
-                ctx.fillStyle = '#0f172a';
-                const facingRight = Math.cos(this.aimAngle) >= 0;
-                const eyeOffset = facingRight ? 4 : -10;
-                ctx.fillRect(eyeOffset, -10, 8, 6);
-
-                ctx.save();
-                ctx.rotate(this.aimAngle);
-                ctx.fillStyle = '#64748b';
-                ctx.fillRect(5, -3, 18, 6);
-                ctx.restore();
-
-                ctx.restore();
-
-                ctx.fillStyle = this.team === 'blue' ? '#60a5fa' : '#f87171';
-                ctx.font = '10px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(this.name, this.x + this.width / 2, this.y - 12);
-
-                ctx.fillStyle = '#0f172a';
-                ctx.fillRect(this.x, this.y - 8, this.width, 4);
-                ctx.fillStyle = this.team === 'blue' ? '#3b82f6' : '#ef4444';
-                ctx.fillRect(this.x, this.y - 8, (this.hp / this.maxHp) * this.width, 4);
-            }
-        }
-
-        /* ==========================================================================
-           7. MATCHMAKING & ROUND FLOW
-           ========================================================================== */
-        let characters = [];
-        let playerChar = null;
-
-        function startMatchmakingSequence() {
-            gameState = 'MATCHMAKING';
-            document.getElementById('screen-lobby').classList.add('hidden');
-            document.getElementById('screen-matchmaking').classList.remove('hidden');
-
-            const isP2pConnected = (peerConn && peerConn.open) || isP2pActive;
-            document.getElementById('mm-mode-type').innerText = isP2pConnected ? 'P2P Online Session' : 'Local / AI Bot Mode';
-
-            setTimeout(() => {
-                document.getElementById('screen-matchmaking').classList.add('hidden');
-                document.getElementById('screen-vs').classList.remove('hidden');
-
-                document.getElementById('vs-p1-name').innerText = userProfile.username;
-                document.getElementById('vs-p1-rank').innerText = `LVL ${userProfile.level} - ${getRankName(userProfile.level)}`;
-
-                let count = 3;
-                document.getElementById('vs-countdown').innerText = count;
-                const cdInterval = setInterval(() => {
-                    count--;
-                    document.getElementById('vs-countdown').innerText = count;
-                    if (count <= 0) {
-                        clearInterval(cdInterval);
-                        document.getElementById('screen-vs').classList.add('hidden');
-                        initializeMatchCombat();
-                    }
-                }, 1000);
-            }, 2500);
-        }
-
-        function getRankName(lvl) {
-            if (lvl >= 10) return 'Grandmaster';
-            if (lvl >= 5) return 'Heroic';
-            if (lvl >= 3) return 'Gold II';
-            return 'Bronze I';
-        }
-
-        function initializeMatchCombat() {
-            gameState = 'PLAYING';
-            blueScore = 0;
-            redScore = 0;
-            roundNumber = 1;
-            playerKillsThisMatch = 0;
-
-            document.getElementById('game-container').classList.remove('hidden');
-            resizeCanvas();
-
-            const w = canvas.width;
-            const isConnected = (peerConn && peerConn.open) || isP2pActive;
-
-            playerChar = new BeanCharacter('p1', userProfile.username, 'blue', true, userProfile.skinColor, w * 0.15);
-            const blueBot = new BeanCharacter('p2', isConnected ? 'Online Player' : 'BeanBot Alpha', 'blue', false, '#3b82f6', w * 0.25);
-
-            const redBot1 = new BeanCharacter('e1', 'BeanViper', 'red', false, '#ef4444', w * 0.75);
-            const redBot2 = new BeanCharacter('e2', 'BeanShadow', 'red', false, '#dc2626', w * 0.85);
-
-            characters = [playerChar, blueBot, redBot1, redBot2];
-
-            startRoundSequence();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function startRoundSequence() {
-            roundState = 'FREEZE';
-            roundTimeLeft = 90;
-
-            const w = canvas.width;
-            characters[0].resetForNewRound(w * 0.15);
-            characters[1].resetForNewRound(w * 0.25);
-            characters[2].resetForNewRound(w * 0.75);
-            characters[3].resetForNewRound(w * 0.85);
-
-            characters.forEach(c => c.credits += 1200);
-
-            bullets = [];
-            grenades = [];
-            glooWalls = [];
-
-            characters.filter(c => !c.isPlayer).forEach(bot => {
-                if (bot.credits >= 3500 && Math.random() < 0.4) bot.weaponKey = 'sniper';
-                else if (bot.credits >= 2100) bot.weaponKey = 'ak47';
-                else if (bot.credits >= 1200) bot.weaponKey = 'smg';
-                bot.weapon = WEAPONS[bot.weaponKey];
-            });
-
-            document.getElementById('hud-round-num').innerText = `ROUND ${roundNumber}`;
-            document.getElementById('score-blue').innerText = blueScore;
-            document.getElementById('score-red').innerText = redScore;
-            updateHud();
-
-            showAnnouncerBanner('FREEZE BUY PHASE (5s)', 'text-amber-400');
-
-            setTimeout(() => {
-                roundState = 'COMBAT';
-                showAnnouncerBanner('FIGHT!', 'text-emerald-400');
-            }, 5000);
-
-            if (roundTimerInterval) clearInterval(roundTimerInterval);
-            roundTimerInterval = setInterval(() => {
-                if (gameState !== 'PLAYING') return;
-                roundTimeLeft--;
-                const mins = String(Math.floor(roundTimeLeft / 60)).padStart(2, '0');
-                const secs = String(roundTimeLeft % 60).padStart(2, '0');
-                document.getElementById('hud-round-timer').innerText = `${mins}:${secs}`;
-
-                if (roundTimeLeft <= 0) {
-                    clearInterval(roundTimerInterval);
-                    evaluateRoundTimeout();
-                }
-            }, 1000);
-        }
-
-        function checkRoundEndCondition() {
-            if (roundState !== 'COMBAT') return;
-
-            const blueAlive = characters.filter(c => c.team === 'blue' && c.hp > 0).length;
-            const redAlive = characters.filter(c => c.team === 'red' && c.hp > 0).length;
-
-            if (blueAlive === 0 || redAlive === 0) {
-                roundState = 'END';
-                clearInterval(roundTimerInterval);
-
-                if (blueAlive > 0) {
-                    blueScore++;
-                    showAnnouncerBanner('ROUND VICTORY!', 'text-blue-400');
-                } else {
-                    redScore++;
-                    showAnnouncerBanner('ROUND DEFEAT!', 'text-red-400');
-                }
-
-                setTimeout(() => {
-                    if (blueScore >= 4 || redScore >= 4) {
-                        endMatchCombat();
-                    } else {
-                        roundNumber++;
-                        startRoundSequence();
-                    }
-                }, 3000);
-            }
-        }
-
-        function evaluateRoundTimeout() {
-            if (roundState !== 'COMBAT') return;
-            roundState = 'END';
-            showAnnouncerBanner('TIME EXPIRED - DRAW', 'text-slate-400');
-            setTimeout(() => {
-                roundNumber++;
-                startRoundSequence();
-            }, 3000);
-        }
-
-        function endMatchCombat() {
-            gameState = 'MATCH_END';
-            const won = blueScore >= 4;
-
-            const title = document.getElementById('end-result-title');
-            title.innerText = won ? 'VICTORY' : 'DEFEAT';
-            title.className = `text-7xl font-teko font-bold tracking-widest uppercase mb-2 ${won ? 'text-amber-400' : 'text-red-500'}`;
-
-            const rewardCoins = won ? 600 + (playerKillsThisMatch * 50) : 200 + (playerKillsThisMatch * 50);
-            userProfile.coins += rewardCoins;
-            if (won) userProfile.wins++; else userProfile.losses++;
-            userProfile.level = Math.floor((userProfile.wins * 2) + 1);
-
-            saveUserProfile();
-
-            document.getElementById('end-coins-earned').innerText = `+${rewardCoins} 🪙`;
-            document.getElementById('end-total-kills').innerText = playerKillsThisMatch;
-            document.getElementById('end-rank-progress').innerText = `LVL ${userProfile.level}`;
-            document.getElementById('screen-match-end').classList.remove('hidden');
-        }
-
-        /* ==========================================================================
-           8. PARTICLES, HUD & RENDERING LOOP
-           ========================================================================== */
-        function createParticles(x, y, color, count) {
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    life: 25 + Math.random() * 15,
-                    color: color
-                });
-            }
-        }
-
-        function addKillFeed(killer, killerTeam, victim, victimTeam) {
-            const feed = document.getElementById('kill-feed');
-            const item = document.createElement('div');
-            item.className = 'bg-slate-900/90 border border-slate-800 text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg animate-bounce';
-
-            const kColor = killerTeam === 'blue' ? 'text-blue-400' : 'text-red-400';
-            const vColor = victimTeam === 'blue' ? 'text-blue-400' : 'text-red-400';
-
-            item.innerHTML = `<span class="${kColor} font-bold">${killer}</span> 💥 <span class="${vColor} font-bold">${victim}</span>`;
-            feed.appendChild(item);
-
-            if (killer === userProfile.username) playerKillsThisMatch++;
-
-            setTimeout(() => item.remove(), 4000);
-        }
-
-        function showAnnouncerBanner(text, textColorClass) {
-            const banner = document.getElementById('announcer-banner');
-            const annText = document.getElementById('announcer-text');
-            annText.innerText = text;
-            annText.className = `text-6xl font-teko font-bold tracking-widest drop-shadow-2xl uppercase ${textColorClass}`;
-            banner.classList.remove('hidden');
-
-            setTimeout(() => banner.classList.add('hidden'), 2500);
-        }
-
-        function gameLoop() {
-            if (gameState !== 'PLAYING') return;
-
-            ctx.fillStyle = '#080c14';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let plat of platforms) {
-                ctx.fillStyle = plat.type === 'ground' ? '#1e293b' : plat.type === 'wood' ? '#334155' : '#475569';
-                ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-                ctx.fillStyle = '#64748b';
-                ctx.fillRect(plat.x, plat.y, plat.width, 3);
-            }
-
-            for (let i = glooWalls.length - 1; i >= 0; i--) {
-                let wall = glooWalls[i];
-                ctx.fillStyle = wall.team === 'blue' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)';
-                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
-                ctx.strokeStyle = '#ffffff';
-                ctx.strokeRect(wall.x, wall.y, wall.width, wall.height);
-            }
-
-            characters.forEach(c => {
-                c.update(keys, mousePos);
-                c.draw();
-            });
-
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let b = bullets[i];
-                b.x += b.vx;
-                b.y += b.vy;
-
-                ctx.strokeStyle = b.color;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(b.x, b.y);
-                ctx.lineTo(b.x - b.vx * 1.5, b.y - b.vy * 1.5);
-                ctx.stroke();
-
-                for (let c of characters) {
-                    if (c.team !== b.team && c.hp > 0) {
-                        if (
-                            b.x >= c.x &&
-                            b.x <= c.x + c.width &&
-                            b.y >= c.y &&
-                            b.y <= c.y + c.height
-                        ) {
-                            const attacker = characters.find(a => a.id === b.ownerId);
-                            const attackerName = attacker ? attacker.name : 'Unknown';
-                            c.takeDamage(b.damage, attackerName, b.team);
-                            createParticles(b.x, b.y, '#ef4444', 6);
-                            bullets.splice(i, 1);
-                            break;
-                        }
-                    }
-                }
-
-                for (let wall of glooWalls) {
-                    if (
-                        b.x >= wall.x &&
-                        b.x <= wall.x + wall.width &&
-                        b.y >= wall.y &&
-                        b.y <= wall.y + wall.height
-                    ) {
-                        wall.hp -= b.damage;
-                        createParticles(b.x, b.y, '#60a5fa', 4);
-                        bullets.splice(i, 1);
-                        break;
-                    }
-                }
-
-                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-                    bullets.splice(i, 1);
-                }
-            }
-
-            glooWalls = glooWalls.filter(w => w.hp > 0);
-
-            for (let i = grenades.length - 1; i >= 0; i--) {
-                let g = grenades[i];
-                g.x += g.vx;
-                g.y += g.vy;
-                g.vy += 0.4;
-                g.timer--;
-
-                if (g.y >= canvas.height - 70) {
-                    g.y = canvas.height - 70;
-                    g.vy *= -0.5;
-                    g.vx *= 0.7;
-                }
-
-                ctx.fillStyle = '#ef4444';
-                ctx.beginPath();
-                ctx.arc(g.x, g.y, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (g.timer <= 0) {
-                    audio.playExplosion();
-                    createParticles(g.x, g.y, '#f59e0b', 30);
-
-                    characters.forEach(c => {
-                        let dist = Math.hypot(c.x - g.x, c.y - g.y);
-                        if (dist < 120) {
-                            c.takeDamage(75 * (1 - dist / 120), 'Grenade', g.ownerTeam);
-                        }
-                    });
-
-                    grenades.splice(i, 1);
-                }
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
-
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        /* ==========================================================================
-           9. INPUT BINDINGS & CONTROLS
-           ========================================================================== */
-        const keys = {};
-        const mousePos = { x: 0, y: 0 };
-
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-
-            if (gameState === 'PLAYING') {
-                if (e.key === 'w' || e.key === 'W' || e.key === ' ' || e.key === 'ArrowUp') {
-                    if (playerChar) playerChar.jump();
-                }
-                if (e.key === 'e' || e.key === 'E') {
-                    toggleBuyMenu();
-                }
-                if (e.key === 'r' || e.key === 'R') {
-                    if (playerChar) playerChar.reload();
-                }
-                if (e.key === 'f' || e.key === 'F') {
-                    if (playerChar) playerChar.deployGlooWall();
-                }
-                if (e.key === 'g' || e.key === 'G') {
-                    if (playerChar) playerChar.throwGrenade();
-                }
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            mousePos.x = e.clientX;
-            mousePos.y = e.clientY;
-        });
-
-        window.addEventListener('mousedown', (e) => {
-            if (gameState === 'PLAYING' && e.button === 0 && playerChar) {
-                playerChar.shootWeapon();
-            }
-        });
-
-        function updateHud() {
-            if (!playerChar) return;
-
-            document.getElementById('hud-hp-val').innerText = `${Math.max(0, Math.floor(playerChar.hp))} / 100`;
-            document.getElementById('hud-hp-bar').style.width = `${Math.max(0, (playerChar.hp / playerChar.maxHp) * 100)}%`;
-
-            document.getElementById('hud-armor-val').innerText = `${Math.floor(playerChar.armor)} / 100`;
-            document.getElementById('hud-armor-bar').style.width = `${(playerChar.armor / 100) * 100}%`;
-
-            document.getElementById('hud-weapon-name').innerText = playerChar.weapon.name;
-            document.getElementById('hud-credits').innerText = playerChar.credits;
-            document.getElementById('shop-credits').innerText = `$${playerChar.credits}`;
-
-            document.getElementById('hud-ammo').innerText = playerChar.isReloading ? 'RELOADING...' : `${playerChar.currentAmmo} / ${playerChar.weapon.ammoMax}`;
-            document.getElementById('hud-gloo-count').innerText = `🛡️ ${playerChar.glooCount}`;
-            document.getElementById('hud-nade-count').innerText = `💣 ${playerChar.nadeCount}`;
-        }
-
-        function toggleBuyMenu() {
-            const menu = document.getElementById('buy-menu');
-            if (menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden');
-            } else {
-                menu.classList.add('hidden');
-            }
-        }
-
-        /* ==========================================================================
-           10. APP INITIALIZATION
-           ========================================================================== */
-        window.onload = function() {
-            loadUserProfile();
-
-            // Setup Profile Fields
-            document.getElementById('lobby-username').innerText = userProfile.username;
-            document.getElementById('input-username').value = userProfile.username;
-            document.getElementById('lobby-coins').innerText = userProfile.coins.toLocaleString();
-            document.getElementById('lobby-wins').innerText = `${userProfile.wins} W / ${userProfile.losses} L`;
-            document.getElementById('lobby-level-badge').innerText = `LVL ${userProfile.level}`;
-            document.getElementById('lobby-rank-name').innerText = getRankName(userProfile.level);
-
-            initPeerJS();
-
-            document.getElementById('btn-enter-lobby').onclick = function() {
-                document.getElementById('screen-title').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden');
-                audio.init();
-            };
-
-            document.getElementById('btn-start-matchmaking').onclick = function() {
-                startMatchmakingSequence();
-            };
-
-            document.getElementById('btn-cancel-mm').onclick = function() {
-                document.getElementById('screen-matchmaking').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden');
-            };
-
-            document.getElementById('btn-return-lobby').onclick = function() {
-                document.getElementById('screen-match-end').classList.add('hidden');
-                document.getElementById('game-container').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden');
-
-                document.getElementById('lobby-coins').innerText = userProfile.coins.toLocaleString();
-                document.getElementById('lobby-wins').innerText = `${userProfile.wins} W / ${userProfile.losses} L`;
-                document.getElementById('lobby-level-badge').innerText = `LVL ${userProfile.level}`;
-            };
-
-            document.getElementById('btn-toggle-audio').onclick = function() {
-                userProfile.audioEnabled = !userProfile.audioEnabled;
-                document.getElementById('audio-icon').innerText = userProfile.audioEnabled ? '🔊' : '🔇';
-                saveUserProfile();
-            };
-
-            document.querySelectorAll('.skin-opt').forEach(btn => {
-                btn.onclick = function() {
-                    userProfile.skinColor = this.dataset.color;
-                    saveUserProfile();
-                    document.querySelectorAll('.skin-opt').forEach(b => b.classList.replace('border-white', 'border-transparent'));
-                    this.classList.replace('border-transparent', 'border-white');
-                };
-            });
-
-            document.getElementById('btn-save-name').onclick = function() {
-                const val = document.getElementById('input-username').value.trim();
-                if (val) {
-                    userProfile.username = val;
-                    document.getElementById('lobby-username').innerText = val;
-                    saveUserProfile();
-                }
-            };
-
-            document.getElementById('btn-copy-code').onclick = function() {
-                const codeInput = document.getElementById('host-code-display');
-                codeInput.select();
-                document.execCommand('copy');
-                alert('Copied Room Code: ' + codeInput.value);
-            };
-
-            document.getElementById('btn-join-peer').onclick = function() {
-                const code = document.getElementById('input-join-code').value.trim();
-                if (code) {
-                    connectToPeerRoom(code);
-                }
-            };
-
-            document.getElementById('btn-open-buy').onclick = toggleBuyMenu;
-            document.getElementById('btn-close-buy').onclick = toggleBuyMenu;
-
-            document.querySelectorAll('.btn-buy').forEach(btn => {
-                btn.onclick = function() {
-                    const wKey = this.dataset.weapon;
-                    const weapon = WEAPONS[wKey];
-                    if (playerChar && playerChar.credits >= weapon.price) {
-                        playerChar.credits -= weapon.price;
-                        playerChar.weaponKey = wKey;
-                        playerChar.weapon = weapon;
-                        playerChar.currentAmmo = weapon.ammoMax;
-                        updateHud();
-                    }
-                };
-            });
-
-            document.querySelectorAll('.btn-buy-utility').forEach(btn => {
-                btn.onclick = function() {
-                    const type = this.dataset.buy;
-                    if (type === 'armor' && playerChar && playerChar.credits >= 600) {
-                        playerChar.credits -= 600;
-                        playerChar.armor = 100;
-                    } else if (type === 'gloo' && playerChar && playerChar.credits >= 400) {
-                        playerChar.credits -= 400;
-                        playerChar.glooCount++;
-                    } else if (type === 'nade' && playerChar && playerChar.credits >= 300) {
-                        playerChar.credits -= 300;
-                        playerChar.nadeCount++;
-                    }
-                    updateHud();
-                };
-            });
-        };
-    </script>
+    <div class="stats" style="margin-top:15px"><div class="stat"><b id="wins">0</b><span>Victories</span></div><div class="stat"><b id="losses">0</b><span>Defeats</span></div></div>
+    <p style="margin-top:18px">For GitHub Pages, this prototype uses PeerJS for browser-to-browser data transport. A dedicated authoritative server is recommended for a production competitive game.</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="queue" class="screen"><div class="card queue"><div class="spinner"></div><h2 id="qtitle">SEARCHING FOR OPPONENT</h2><p id="qtext">Matching your player ID with an available duel…</p><div class="searchbar"><i></i></div><button id="cancelq" class="btn">CANCEL</button></div></section>
+
+<section id="matchfound" class="screen"><div class="card vs"><div class="versus"><div class="fighter you"><div class="muted">YOUR FIGHTER</div><h3 id="vsyou">Player</h3><div class="big">🫘</div></div><div class="vsword">VS</div><div class="fighter enemy"><div class="muted">OPPONENT</div><h3 id="vsenemy">Bean Hunter</h3><div class="big">😈</div></div></div><div class="count">Entering the steel cage in <b id="count">3</b>…</div></div></section>
+
+<section id="game" class="screen">
+ <canvas id="c" class="gamecanvas"></canvas>
+ <div class="hud top-hud"><div class="scorebar"><div class="score blue"><span id="pname">YOU</span> <span id="pscore">0</span></div><div class="round"><b id="roundtxt">ROUND 1</b><span id="timer">90</span>s</div><div class="score red"><span id="escore">0</span> <span id="ename">ENEMY</span></div></div></div>
+ <div class="hud health"><div style="display:flex;justify-content:space-between;font-size:12px"><b>HP</b><span id="hptext">100 / 100</span></div><div class="bar"><i id="hpbar"></i></div><div class="ammo"><span>PISTOL</span><b><span id="ammo">12</span> / ∞</b></div></div>
+ <div class="hud controls"><div class="key mobile" data-k="left"><strong>◀</strong>MOVE</div><div class="key mobile" data-k="right"><strong>▶</strong>MOVE</div><div class="key mobile" data-k="jump"><strong>▲</strong>JUMP</div><div class="key gloo" data-k="gloo"><strong>🧱</strong>GLOO</div><div class="key fire" data-k="fire"><strong>●</strong>FIRE</div></div>
+</section>
+
+<section id="end" class="screen"><div class="card end"><div id="winner" class="winner">VICTORY</div><div id="result" class="result">You won the Lone Wolf duel.</div><div class="stats"><div class="stat"><b id="endrounds">2 - 0</b><span>Round score</span></div><div class="stat"><b id="endkills">1</b><span>Knockouts</span></div></div><button id="again" class="btn primary" style="width:100%;margin-top:20px;padding:15px">PLAY AGAIN</button><button id="back" class="btn" style="width:100%;margin-top:9px">RETURN TO LOBBY</button></div></section>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const screens=['boot','identity','lobby','queue','matchfound','game','end'];
+function show(id){screens.forEach(x=>$(x).classList.toggle('active',x===id))}
+const KEY='BEAN_DUEL_PROFILE_V1';
+let profile=null;
+function uid(){return 'BD-'+Math.random().toString(36).slice(2,8).toUpperCase()}
+function roomId(){return 'BD-'+Math.floor(1000+Math.random()*9000)}
+function load(){try{profile=JSON.parse(localStorage.getItem(KEY))}catch{}}
+function save(){localStorage.setItem(KEY,JSON.stringify(profile))}
+function validNick(n){return /^[A-Za-z0-9_]{2,13}$/.test(n)}
+function refreshLobby(){ $('lnick').textContent=profile.nick;$('lid').textContent=profile.id;$('wins').textContent=profile.wins;$('losses').textContent=profile.losses;$('pname').textContent=profile.nick.slice(0,10);$('vsyou').textContent=profile.nick}
+let generated=uid();$('newid').textContent=generated;
+$('regen').onclick=()=>{$('newid').textContent=generated=uid()};
+$('create').onclick=()=>{let n=$('nick').value.trim();if(!validNick(n)){$('nickerr').textContent='Use 2–13 letters, numbers or underscore.';return}profile={nick:n,id:generated,wins:0,losses:0};save();refreshLobby();show('lobby');initPeer()};
+$('nick').addEventListener('input',()=>{$('nickerr').textContent=''});
+$('copyid').onclick=()=>navigator.clipboard?.writeText(profile.id);
+$('reset').onclick=()=>{if(confirm('Delete this local fighter profile?')){localStorage.removeItem(KEY);location.reload()}};
+
+let peer=null,conn=null,hostCode='',isHost=false,online=false;
+function initPeer(){
+  if(peer)return;
+  try{
+    peer=new Peer(roomId(),{debug:0});
+    peer.on('open',id=>{$('roomcode').value=id;hostCode=id;online=true;$('netstatus').textContent='● PeerJS ready';$('netstatus').style.color='var(--green)'});
+    peer.on('connection',c=>{conn=c;isHost=true;online=true;wireConn();$('netstatus').textContent='● Friend connected';});
+    peer.on('error',e=>{$('netstatus').textContent='PeerJS unavailable — BOT mode still works';});
+  }catch(e){$('netstatus').textContent='BOT fallback available'}
+}
+function wireConn(){
+ if(!conn)return;
+ conn.on('open',()=>{online=true;conn.send({t:'HELLO',nick:profile.nick,id:profile.id})});
+ conn.on('data',d=>network(d));
+ conn.on('close',()=>{online=false});
+}
+$('host').onclick=()=>{initPeer();if(peer&&!peer.destroyed){try{peer.destroy();}catch{}peer=null;setTimeout(initPeer,100)}};
+$('copyroom').onclick=()=>navigator.clipboard?.writeText($('roomcode').value);
+$('join').onclick=()=>{let code=$('joincode').value.trim().toUpperCase();if(!peer||peer.destroyed){initPeer();setTimeout(()=>joinRoom(code),700)}else joinRoom(code)};
+function joinRoom(code){if(!code)return;try{conn=peer.connect(code);isHost=false;wireConn();$('netstatus').textContent='Connecting to '+code+'…';conn.on('open',()=>{online=true;conn.send({t:'HELLO',nick:profile.nick,id:profile.id});startMatch(conn.peer?'online':'bot')})}catch{startMatch('bot')}}
+function network(d){
+ if(d.t==='HELLO'){
+   $('vsenemy').textContent=d.nick||'Friend';
+   if(isHost){try{conn.send({t:'HELLO_ACK',nick:profile.nick,id:profile.id})}catch{}}
+   startMatch('online',d.nick||'Friend');
+ }
+ if(d.t==='HELLO_ACK'){startMatch('online',d.nick||'Friend')}
+ if(d.t==='STATE'&&game.running&&!isHost){game.enemy.x=d.x;game.enemy.y=d.y;game.enemy.hp=d.hp;game.enemy.vx=d.vx;game.enemy.vy=d.vy;game.enemy.aim=d.aim}
+ if(d.t==='SHOT'&&game.running&&!isHost)remoteShot(d);
+ if(d.t==='GLOO'&&game.running&&!isHost)addGloo(d.x,d.y,d.owner);
+ if(d.t==='HIT'&&game.running&&!isHost){game.enemy.hp=Math.max(0,game.enemy.hp-d.dmg)}
+}
+function send(d){if(conn&&conn.open)try{conn.send(d)}catch{}}
+
+let matchMode='bot',enemyName='Bean Hunter',qTimer=null;
+function startMatch(mode='bot',name='Bean Hunter'){
+ matchMode=mode;enemyName=name||'Bean Hunter';$('vsenemy').textContent=enemyName;show('matchfound');
+ let n=3;$('count').textContent=n;clearInterval(qTimer);qTimer=setInterval(()=>{n--;$('count').textContent=n;if(n<=0){clearInterval(qTimer);startGame()}},800)
+}
+$('quick').onclick=()=>{show('queue');$('qtitle').textContent='SEARCHING FOR OPPONENT';$('qtext').textContent='Looking for a nearby skill-matched fighter…';setTimeout(()=>startMatch('bot','Bean Hunter'),1300)};
+$('cancelq').onclick=()=>show('lobby');
+$('again').onclick=()=>startMatch('bot','Bean Hunter');
+$('back').onclick=()=>{game.running=false;show('lobby')};
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&game.running){game.running=false;show('lobby')}});
+
+const canvas=$('c'),ctx=canvas.getContext('2d');
+const keys={};let mouse={x:0,y:0,down:false};
+window.addEventListener('keydown',e=>{keys[e.key]=true;if([' ','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();if(game.running&&e.key.toLowerCase()==='f')gloo()});
+window.addEventListener('keyup',e=>keys[e.key]=false);
+canvas.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+canvas.addEventListener('mousedown',e=>{if(e.button===0){mouse.down=true;shoot()}});
+window.addEventListener('mouseup',e=>{if(e.button===0)mouse.down=false});
+canvas.addEventListener('touchstart',e=>{let t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;mouse.down=true;shoot()},{passive:false});
+canvas.addEventListener('touchend',()=>mouse.down=false);
+document.querySelectorAll('.key').forEach(b=>{
+ b.onpointerdown=e=>{e.preventDefault();let k=b.dataset.k;keys['__'+k]=true;if(k==='fire')shoot();if(k==='jump')jump();if(k==='gloo')gloo()};
+ b.onpointerup=()=>keys['__'+b.dataset.k]=false;b.onpointerleave=()=>keys['__'+b.dataset.k]=false;
+});
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}addEventListener('resize',resize);resize();
+
+const game={running:false,round:1,pscore:0,escore:0,time:90,bullets:[],gloos:[],particles:[],kills:0,last:0,tick:0,enemy:null,player:null};
+function fighter(x,enemy=false){return{x,y:0,w:38,h:58,vx:0,vy:0,hp:100,max:100,onGround:false,jumps:0,aim:0,cool:0,ammo:12,enemy}}
+function startGame(){
+ show('game');resize();game.running=true;game.round=1;game.pscore=0;game.escore=0;game.time=90;game.kills=0;newRound();game.last=performance.now();requestAnimationFrame(loop)
+}
+function newRound(){
+ game.time=90;game.bullets=[];game.gloos=[];game.particles=[];game.player=fighter(100);game.enemy=fighter(canvas.width-145,true);
+ game.player.y=canvas.height-150;game.enemy.y=canvas.height-150;game.player.aim=0;game.enemy.aim=Math.PI;
+ updateHUD()
+}
+function jump(){let p=game.player;if(!p||!game.running)return;if(p.onGround||p.jumps<2){p.vy=-12;p.jumps++}}
+function shoot(){
+ let p=game.player;if(!p||!game.running||p.cool>0||p.ammo<=0)return;
+ p.cool=220;p.ammo--;let cx=p.x+p.w/2,cy=p.y+p.h/2,ang=Math.atan2(mouse.y-cy,mouse.x-cx);if(!mouse.x&&!mouse.y)ang=p.aim;
+ p.aim=ang;let b={x:cx,y:cy,vx:Math.cos(ang)*16,vy:Math.sin(ang)*16,dmg:25,owner:'p',life:90};game.bullets.push(b);send({t:'SHOT',x:cx,y:cy,vx:b.vx,vy:b.vy,dmg:b.dmg});burst(cx,cy,2)
+}
+function remoteShot(d){game.bullets.push({x:d.x,y:d.y,vx:d.vx,vy:d.vy,dmg:d.dmg,owner:'e',life:90})}
+function reload(){if(game.player)game.player.ammo=12}
+function gloo(){
+ let p=game.player;if(!p||!game.running)return;
+ let dir=(Math.cos(p.aim)>=0?1:-1),x=p.x+dir*48;if(game.gloos.some(g=>Math.abs(g.x-x)<55))return;
+ addGloo(x,canvas.height-140,'p');send({t:'GLOO',x,y:canvas.height-140,owner:'p'})
+}
+function addGloo(x,y,owner){game.gloos.push({x:x-10,y:y,w:20,h:95,owner,life:1200});}
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function physics(p){
+ p.vy+=.55;p.x+=p.vx;p.y+=p.vy;p.vx*=.82;p.cool=Math.max(0,p.cool-16);
+ let floor=canvas.height-82;if(p.y+p.h>=floor){p.y=floor-p.h;p.vy=0;p.onGround=true;p.jumps=0}else p.onGround=false;
+ p.x=Math.max(15,Math.min(canvas.width-p.w-15,p.x));
+ for(const g of game.gloos)if(hit(p,g)){if(p.vx>0)p.x=g.x-p.w;else if(p.vx<0)p.x=g.x+g.w;p.vx=0}
+}
+function playerInput(){
+ let p=game.player;if(keys.a||keys.A||keys.ArrowLeft||keys.__left)p.vx=-5.5;if(keys.d||keys.D||keys.ArrowRight||keys.__right)p.vx=5.5;
+ if((keys.w||keys.W||keys[' ']||keys.__jump)&&!playerInput.j){jump();playerInput.j=true}if(!(keys.w||keys.W||keys[' ']||keys.__jump))playerInput.j=false;
+ if(keys.r||keys.R){reload();keys.r=keys.R=false}
+ p.aim=Math.atan2(mouse.y-(p.y+p.h/2),mouse.x-(p.x+p.w/2));if(mouse.down||keys.__fire)shoot()
+}
+function botAI(){
+ let e=game.enemy,p=game.player,dx=p.x-e.x; e.aim=Math.atan2((p.y+20)-(e.y+20),dx);
+ if(Math.abs(dx)>230)e.vx=Math.sign(dx)*3.2;else if(Math.abs(dx)<120)e.vx=-Math.sign(dx)*2.1;else e.vx*=.8;
+ if(Math.random()<.012&&e.onGround)e.vy=-11;
+ if(e.cool<=0&&Math.abs(dx)<600){e.cool=480;e.ammo=e.ammo<=0?12:e.ammo;e.ammo--;game.bullets.push({x:e.x+e.w/2,y:e.y+28,vx:Math.cos(e.aim)*12,vy:Math.sin(e.aim)*12,dmg:18,owner:'e',life:90})}
+ if(Math.random()<.002)addGloo(e.x+Math.sign(dx)*45,canvas.height-140,'e')
+}
+function updateBullets(){
+ for(let i=game.bullets.length-1;i>=0;i--){let b=game.bullets[i];b.x+=b.vx;b.y+=b.vy;b.life--;
+  let target=b.owner==='p'?game.enemy:game.player;
+  if(hit({x:b.x-3,y:b.y-3,w:6,h:6},target)){target.hp-=b.dmg;burst(b.x,b.y,7);if(b.owner==='p'&&target.hp<=0){game.kills++}game.bullets.splice(i,1);continue}
+  if(game.gloos.some(g=>b.x>g.x&&b.x<g.x+g.w&&b.y>g.y)){game.bullets.splice(i,1);continue}
+  if(b.life<=0||b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height)game.bullets.splice(i,1)
+ }
+}
+function burst(x,y,n){for(let i=0;i<n;i++)game.particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:25})}
+function updateHUD(){$('pscore').textContent=game.pscore;$('escore').textContent=game.escore;$('roundtxt').textContent='ROUND '+game.round;$('timer').textContent=Math.ceil(game.time);$('hptext').textContent=Math.max(0,Math.ceil(game.player.hp))+' / 100';$('hpbar').style.width=Math.max(0,game.player.hp)+'%';$('ammo').textContent=game.player.ammo}
+function endRound(winner){
+ if(winner==='p')game.pscore++;else game.escore++;
+ if(game.pscore>=2||game.escore>=2){finish(game.pscore>game.escore);return}
+ game.round++;setTimeout(newRound,900)
+}
+function finish(win){game.running=false;if(win)profile.wins++;else profile.losses++;save();$('winner').textContent=win?'VICTORY':'DEFEAT';$('winner').style.color=win?'var(--gold2)':'var(--red)';$('result').textContent=win?'You won the Lone Wolf duel.':'The opponent took the duel.';$('endrounds').textContent=game.pscore+' - '+game.escore;$('endkills').textContent=game.kills;refreshLobby();show('end')}
+function draw(){
+ let w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
+ let grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#07111e');grad.addColorStop(1,'#11100d');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+ // cage
+ ctx.strokeStyle='#263a4f';ctx.lineWidth=3;ctx.strokeRect(20,30,w-40,h-112);
+ ctx.strokeStyle='#172534';ctx.lineWidth=1;for(let x=30;x<w-20;x+=42){ctx.beginPath();ctx.moveTo(x,30);ctx.lineTo(x,h-82);ctx.stroke()}
+ ctx.fillStyle='#171b20';ctx.fillRect(20,h-82,w-40,82);ctx.strokeStyle='#4a3b25';ctx.strokeRect(20,h-82,w-40,1);
+ // platforms
+ ctx.fillStyle='#29313b';ctx.fillRect(w*.25,h-205,w*.5,14);ctx.fillStyle='#171c24';ctx.fillRect(w*.25,h-191,w*.5,7);
+ for(const g of game.gloos){ctx.fillStyle='#43c8ff99';ctx.strokeStyle='#8ce5ff';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(g.x,g.y,g.w,g.h,7);ctx.fill();ctx.stroke()}
+ drawF(game.player,'#3e96ff');drawF(game.enemy,'#ff4658');
+ for(const b of game.bullets){ctx.fillStyle=b.owner==='p'?'#ffd45a':'#ff6570';ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fill()}
+ for(let i=game.particles.length-1;i>=0;i--){let q=game.particles[i];q.x+=q.vx;q.y+=q.vy;q.life--;ctx.fillStyle='#ffd45a';ctx.fillRect(q.x,q.y,3,3);if(q.life<=0)game.particles.splice(i,1)}
+}
+function drawF(p,color){
+ ctx.save();ctx.translate(p.x+p.w/2,p.y+p.h/2);ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,5,19,27,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#f4f6f8';ctx.beginPath();ctx.arc(-6,-2,5,0,Math.PI*2);ctx.arc(6,-2,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#10151d';ctx.beginPath();ctx.arc(-6,-2,2,0,Math.PI*2);ctx.arc(6,-2,2,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#11151b';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(4,7);ctx.lineTo(Math.cos(p.aim)*32,Math.sin(p.aim)*32);ctx.stroke();ctx.restore();
+ ctx.fillStyle='#fff';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(p.enemy?enemyName:profile.nick,p.x+p.w/2,p.y-7);
+}
+function loop(now){
+ if(!game.running)return;let dt=Math.min(32,now-game.last);game.last=now;
+ playerInput();if(matchMode==='bot')botAI();physics(game.player);physics(game.enemy);updateBullets();
+ game.time-=dt/1000;if(game.player.hp<=0)endRound('e');else if(game.enemy.hp<=0)endRound('p');else if(game.time<=0)endRound(game.player.hp>=game.enemy.hp?'p':'e');
+ for(const g of game.gloos)g.life--;game.gloos=game.gloos.filter(g=>g.life>0);
+ if(++game.tick%3===0&&isHost)send({t:'STATE',x:game.enemy.x,y:game.enemy.y,vx:game.enemy.vx,vy:game.enemy.vy,hp:game.enemy.hp,aim:game.enemy.aim});
+ updateHUD();draw();requestAnimationFrame(loop)
+}
+load();setTimeout(()=>{if(profile){refreshLobby();show('lobby');initPeer()}else show('identity')},650);
+</script>
 </body>
 </html>
